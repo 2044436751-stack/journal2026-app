@@ -1,0 +1,44 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.sir.journal2026'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.sir.journal2026"
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // 页面打进 apk（assets/journal.html）
+    aaptOptions {
+        noCompress "html"
+    }
+}
+
+dependencies {
+    // 把 assets 映射成 https 域名：这样 localStorage 才有正常 origin
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
+
+// 产出的 apk 直接叫 journal2026-v1.0.apk，别叫 app-debug
+android.applicationVariants.all { variant ->
+    variant.outputs.all { output ->
+        output.outputFileName = "journal2026-v${variant.versionName}.apk"
+    }
+}
