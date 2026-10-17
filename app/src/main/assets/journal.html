@@ -1052,6 +1052,9 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
    （同 .yp-sw/.yp-st/.yp-del 那套；用 min-height 而非固定高，标签多到换行也不会被截） */
 .ypl-box{display:inline-flex;flex-wrap:wrap;align-items:center;align-content:center;
   min-height:var(--item-lh,20px);gap:3px;margin-left:4px}
+/* 旧存档遗留的包裹层：它自身不拉伸的话，标签盒会缩在文字旁、空白全留在标签与 ⇄ 之间；
+   让它吃掉剩余空间（同 .yp-txt 的 flex:1），标签盒才能被推到行尾贴着 ⇄ */
+.yp-item > .wk-item-txtwrap{flex:1 1 auto;min-width:0}
 /* 周计划条目后面会挂「@X月|…」标签。.yp-txt 的 flex-basis 是 0，标签一多就会把文字
    挤成「一个字一行」——给文字兜一个最小宽度，多出来的压力由标签盒自己收缩承担。
    只在周计划生效（标签只长在这里），窄栏（一日四格等）不受影响。 */
@@ -2807,8 +2810,9 @@ function yplPaint(it){
   const box=document.createElement("span");
   box.className="ypl-box";
   box.innerHTML=refs.map(yplTagHTML).join("");
-  /* 插在文字格之后，和文字同一行流内 */
-  txt.insertAdjacentElement("afterend",box);
+  /* 插在文字格（或旧存档遗留的 .wk-item-txtwrap 包裹层）之后，保证是 .yp-item 直接子级
+     —— 若插进收缩的 wrap 里，标签会贴在文字旁、离行尾 ⇄ 一大截 */
+  (host||txt).insertAdjacentElement("afterend",box);
 }
 function yplRefreshAll(){
   $$('.page[data-tpl="weekly"] .yp-item,[data-wk] .yp-item',book).forEach(it=>yplPaint(it));
