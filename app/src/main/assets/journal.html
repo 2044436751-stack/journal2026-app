@@ -1652,21 +1652,39 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .dw-t .c{flex:0 0 24px;text-align:center;font-size:10.5px;color:var(--ink3)}
 /* 页面行：缩进 12px，缩进位置用实心圆点占位 */
 .dw-r{
-  display:flex;align-items:center;gap:6px;height:24px;padding:0 8px 0 12px;
-  border-radius:3px;cursor:pointer;
+  position:relative;overflow:hidden;
+  height:24px;border-radius:3px;cursor:pointer;
 }
-.dw-r .dot{flex:0 0 4px;height:4px;border-radius:50%;background:#bdbdbd}
-.dw-r .s{flex:1;min-width:0;font-size:11px;color:var(--ink2);
+/* 红块：删除（右贴，藏在内容层下方，左滑露出） */
+.dw-r .dw-del{
+  position:absolute;top:0;right:0;bottom:0;width:64px;z-index:0;
+  background:#c0392b;color:#fff;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:12px;letter-spacing:.06em;
+}
+.dw-r .dw-del .x{font-size:14px;font-weight:700;line-height:1}
+/* 内容层：负责平移露出红块，底色与抽屉一致以遮挡 */
+.dw-r .dw-c{
+  position:relative;z-index:1;
+  display:flex;align-items:center;gap:6px;height:24px;
+  padding:0 8px 0 12px;border-radius:3px;background:#fff;
+  will-change:transform;
+}
+.dw-r .dw-c .dot{flex:0 0 4px;height:4px;border-radius:50%;background:#bdbdbd}
+.dw-r .dw-c .s{flex:1;min-width:0;font-size:11px;color:var(--ink2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dw-r .no{flex:0 0 24px;text-align:center;font-size:10.5px;color:var(--ink3)}
-.dw-r:active{background:var(--soft)}
-.dw-r.cur{background:var(--soft)}
-.dw-r.cur .s{color:var(--ink)}
-.dw-r .h{display:none;font-size:12px;color:#bdbdbd;letter-spacing:-1px}
+.dw-r .dw-c .no{flex:0 0 24px;text-align:center;font-size:10.5px;color:var(--ink3)}
+.dw-r:active .dw-c{background:var(--soft)}
+.dw-r.cur .dw-c{background:var(--soft)}
+.dw-r.cur .dw-c .s{color:var(--ink)}
+.dw-r .dw-c .h{display:none;font-size:12px;color:#bdbdbd;letter-spacing:-1px}
 /* 拖动中 */
-.dw-r.lift{background:#f2f2f0;border:1px solid var(--line);box-shadow:0 3px 10px rgba(0,0,0,.12)}
-.dw-r.lift .h{display:inline}
+.dw-r.lift .dw-c{background:#f2f2f0;border:1px solid var(--line);box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.dw-r.lift .dw-c .h{display:inline}
 .dw-r.hidden{visibility:hidden}
+/* 拖动幽灵里不显示红块 / 内容白底 */
+.dw-fly .dw-del{display:none}
+.dw-fly .dw-c{background:transparent}
 .dw-fly{
   position:fixed;z-index:99;pointer-events:none;
   display:flex;align-items:center;gap:6px;height:24px;padding:0 8px 0 12px;
@@ -7927,9 +7945,18 @@ document.addEventListener("click",function(e){
   if(t.closest("[data-idxbtn]")){ openDrawer(); return; }
   if(t.closest("[data-dwclose]")||t.id==="dwm"){ closeDrawer(); return; }
   if(t.closest("[data-dwadd]")){ closeDrawer(); setTimeout(openSheet,240); return; }
+  const delBtn=t.closest(".dw-del");
+  if(delBtn){
+    if(DW_SWIPE_JUST) return;
+    const dwr=delBtn.closest("[data-dwno]");
+    if(dwr) dwSwipeDelete(dwr);
+    return;
+  }
   const dwr=t.closest("[data-dwno]");
   if(dwr){
-    if(DW_JUST_DRAGGED) return;              /* 刚拖动完，别当成点击 */
+    if(DW_JUST_DRAGGED||DW_SWIPE_JUST) return;   /* 刚拖/滑完，别当成点击 */
+    if(DW_OPEN_ROW===dwr){ dwSwipeReset(); return; }   /* 打开态轻点内容＝收起，不跳页 */
+    if(DW_OPEN_ROW) dwSwipeReset();                    /* 打开态点别的行：先收起 */
     const no=parseInt(dwr.dataset.dwno,10);
     closeDrawer();
     setTimeout(()=>gotoPage(no),60);
@@ -9523,8 +9550,9 @@ function drawerHTML(){
          `<span class="n">${t.meta.n}</span><span class="c">${t.list.length}</span></div>`;
       t.list.forEach(x=>{
         h+=`<div class="dw-r${x.no===cur?" cur":""}" data-dwno="${x.no}" data-dwt="${x.tpl}">`+
-             `<span class="dot"></span><span class="s">${esc(pageSummary(x.pg))}</span>`+
-             `<span class="h">≡</span><span class="no">${x.no}</span></div>`;
+             `<div class="dw-del"><span class="x">✕</span><span class="t">删除</span></div>`+
+             `<div class="dw-c"><span class="dot"></span><span class="s">${esc(pageSummary(x.pg))}</span>`+
+             `<span class="h">≡</span><span class="no">${x.no}</span></div></div>`;
       });
     });
   });
@@ -9533,6 +9561,7 @@ function drawerHTML(){
 function dwRender(){
   const d=$("#drawer"), body=$("[data-dwbody]",d);
   if(!d||!body) return;
+  DW_OPEN_ROW=null;
   body.innerHTML=drawerHTML();
   const cur=$(".dw-r.cur",body);
   if(cur&&cur.scrollIntoView) cur.scrollIntoView({block:"center"});
@@ -9549,6 +9578,7 @@ function closeDrawer(){
   const d=$("#drawer");
   if(!d||!d.classList.contains("on")) return;
   dwCancelDrag();
+  dwSwipeReset();
   d.classList.remove("on"); $("#dwm").classList.remove("on");
   document.body.classList.remove("drawn");
   d.setAttribute("aria-hidden","true");
@@ -9637,13 +9667,92 @@ function dwCommit(fromNo,toNo,after){
   dwRender();
   toast("顺序已调整");
 }
+/* ---------- 左滑删除：内容层平移露出右侧红块 ---------- */
+let DW_SWIPE=null, DW_SWIPE_JUST=false, DW_OPEN_ROW=null;
+const SWIPE_W=64, SWIPE_TRIG=8, SWIPE_SNAP=32;
+
+/* 收起当前已打开（左滑露出红块）的行 */
+function dwSwipeReset(){
+  if(DW_OPEN_ROW){
+    const c=DW_OPEN_ROW.querySelector(".dw-c");
+    if(c){ c.style.transition="transform .18s ease"; c.style.transform=""; }
+    DW_OPEN_ROW=null;
+  }
+}
+
+function dwSwipeDown(e){
+  if(e.pointerType==="mouse"&&e.button!==0) return;
+  const row=e.target.closest&&e.target.closest(".dw-r");
+  if(!row) return;
+  if(e.target.closest(".dw-del")) return;            /* 红块点击不触发滑动 */
+  DW_SWIPE={row:row, c:row.querySelector(".dw-c"), id:e.pointerId,
+            startX:e.clientX, startY:e.clientY, x:0, active:false};
+}
+function dwSwipeMove(e){
+  const st=DW_SWIPE; if(!st) return;
+  if(DW_DRAG&&DW_DRAG.active){ DW_SWIPE=null; return; }  /* 长按排序接管 → 放弃滑动 */
+  const dx=e.clientX-st.startX, dy=e.clientY-st.startY;
+  if(!st.active){
+    if(Math.abs(dx)>SWIPE_TRIG && Math.abs(dx)>Math.abs(dy)){
+      st.active=true;
+      if(DW_DRAG){ clearTimeout(DW_DRAG.timer); DW_DRAG=null; }  /* 别启动长按排序 */
+      try{ st.row.setPointerCapture(st.id); }catch(_){}
+    } else if(Math.abs(dy)>SWIPE_TRIG && Math.abs(dy)>=Math.abs(dx)){
+      DW_SWIPE=null; return;                          /* 纵向 → 交给滚动 */
+    } else return;
+  }
+  if(e.cancelable) e.preventDefault();
+  st.x=Math.max(-SWIPE_W, Math.min(0, dx));
+  if(st.c) st.c.style.transform="translateX("+st.x+"px)";
+}
+function dwSwipeUp(){
+  const st=DW_SWIPE; if(!st) return;
+  DW_SWIPE=null;
+  if(!st.active) return;
+  DW_SWIPE_JUST=true;
+  setTimeout(()=>{ DW_SWIPE_JUST=false; },320);
+  const open = st.x < -SWIPE_SNAP;
+  if(st.c){
+    st.c.style.transition="transform .18s ease";
+    st.c.style.transform = open ? "translateX(-"+SWIPE_W+"px)" : "";
+    setTimeout(()=>{ if(st.c) st.c.style.transition=""; },200);
+  }
+  if(open){ if(DW_OPEN_ROW&&DW_OPEN_ROW!==st.row) dwSwipeReset(); DW_OPEN_ROW=st.row; }
+  else if(DW_OPEN_ROW===st.row) DW_OPEN_ROW=null;
+}
+/* 点红块删除：复用既有确认逻辑 */
+function dwSwipeDelete(dwr){
+  const no=parseInt(dwr.dataset.dwno,10);
+  const pages=$$(".page",book);
+  const pg=pages[no-1];
+  if(!pg) return;
+  if(pages.length<=1){ toast("至少保留一页"); return; }
+  const label=(pg.dataset.label||("第 "+no+" 页"));
+  askConfirm({
+    title:"删除这一页？",
+    msg:"即将删除第 <b>"+no+"</b> 页（"+esc(label)+"）。删除后无法恢复。"
+  }).then(ok=>{
+    if(!ok){ dwSwipeReset(); return; }
+    if(DW_OPEN_ROW===dwr) DW_OPEN_ROW=null;
+    pg.remove(); renumber(); autoIndex(); save();
+    dwRender();
+    toast("已删除："+label);
+  });
+}
+
 document.addEventListener("pointerdown",dwStart);
 document.addEventListener("pointermove",dwMove);
 document.addEventListener("pointerup",dwEnd);
 document.addEventListener("pointercancel",dwCancelDrag);
-/* 拖动中别让抽屉跟着滚 */
+/* 左滑删除：内容层平移露出右侧红块 */
+document.addEventListener("pointerdown",dwSwipeDown);
+document.addEventListener("pointermove",dwSwipeMove);
+document.addEventListener("pointerup",dwSwipeUp);
+document.addEventListener("pointercancel",dwSwipeUp);
+/* 拖动 / 左滑中别让抽屉跟着滚 */
 document.addEventListener("touchmove",function(e){
   if(DW_DRAG&&DW_DRAG.active&&e.cancelable) e.preventDefault();
+  if(DW_SWIPE&&DW_SWIPE.active&&e.cancelable) e.preventDefault();
 },{passive:false});
 
 /* ==========================================================
