@@ -8112,8 +8112,11 @@ document.addEventListener("click",function(e){
         pop.innerHTML=hbPopHTML(isNaN(y)?bjDate().getFullYear():y,
                                 isNaN(m)?bjDate().getMonth():m,
                                 parseInt(pg.dataset.hbw,10)||1);
-        pop.style.left=(hbs.offsetLeft||0)+"px";
         pop.classList.add("on");
+        pop.style.left=(hbs.offsetLeft||0)+"px";
+        const pr=pop.getBoundingClientRect(), gr=pg.getBoundingClientRect();
+        const over=pr.right-(gr.right-19);
+        if(over>0) pop.style.left=Math.max(0,(hbs.offsetLeft||0)-over)+"px";
       }
     }
     return;
@@ -8136,9 +8139,12 @@ document.addEventListener("click",function(e){
     mcClosePop();
     if(!wasOn){
       pop.innerHTML=mcPopHTML(parseInt(pg.dataset.mcy,10),parseInt(pg.dataset.mcm,10));
-      /* 面板对齐到切片器下方（月日历的切片器不再贴最左，所以要跟着走位） */
-      pop.style.left=(mcs.offsetLeft||0)+"px";
+      /* 面板对齐到切片器下方（月日历的切片器不再贴最左，所以要跟着走位）；窄屏会捅出右边界 → 夹回纸面内 */
       pop.classList.add("on");
+      pop.style.left=(mcs.offsetLeft||0)+"px";
+      const pr=pop.getBoundingClientRect(), gr=pg.getBoundingClientRect();
+      const over=pr.right-(gr.right-19);
+      if(over>0) pop.style.left=Math.max(0,(mcs.offsetLeft||0)-over)+"px";
     }
     return;
   }
