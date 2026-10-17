@@ -56,8 +56,10 @@ body{
   padding:0; cursor:pointer; opacity:.6;
   -webkit-tap-highlight-color:transparent;
 }
-/* ✕ 与悬浮按钮（目录 / ＋）撞上时先让位：见 delPageYield() */
-.del-page.away{opacity:0;pointer-events:none}
+/* ✕ 与悬浮按钮（目录 / ＋）撞上时先让位：见 delPageYield()。
+   原写法直接 opacity:0 隐藏，导致滚到最后一页底时 ✕ 永远消失、最后一页删不掉；
+   改为挪到页内左下角显示（悬浮按钮只在右下角），既不挡按钮、又能删页 */
+.del-page.away{left:4px;right:auto;opacity:.6}
 .del-page:hover{opacity:1;color:#c0392b;background:#fff}
 .del-page:active{opacity:1;color:#c0392b;background:#fff}
 
