@@ -52,13 +52,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # 实际产物名由 build.gradle 的 outputFileName 决定（如 journal2026-v1.0.apk），用通配符抓取避免写死
+          APK=$(ls app/build/outputs/apk/debug/*.apk 2>/dev/null | head -1)
+          if [ -z "$APK" ]; then echo "ERROR: 未找到构建产物 APK"; exit 1; fi
+          echo "发现 APK: $APK"
           # 清掉旧的同名 release 与 tag，保证每次可重发
           gh release delete apk-latest --yes 2>/dev/null || true
           # 删 git tag（用 API，不依赖 git push 凭证）
           gh api -X DELETE "/repos/${{ github.repository }}/git/refs/tags/apk-latest" 2>/dev/null || true
           # 重建 release 并挂上 APK 资产
           gh release create apk-latest \
-            app/build/outputs/apk/debug/app-debug.apk \
+            "$APK" \
             --title "Journal2026 最新 APK" \
             --notes "自动构建的调试版 APK（对应最新 main 提交的 versionCode）。下载后传到手机覆盖安装即可，不丢日记数据。" \
             --latest
