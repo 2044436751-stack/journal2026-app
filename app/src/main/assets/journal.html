@@ -1870,7 +1870,9 @@ body.tpledit #tplarea .tpl-x:hover{color:#c0392b}
   border-radius:0 !important; box-shadow:none !important;
   margin-bottom:0 !important;
   min-height:100vh !important; min-height:100dvh !important;
-  padding:calc(20px + env(safe-area-inset-top, 0px)) 16px calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+  /* 顶部不用 env(safe-area-inset-top)：壳非全屏，WebView 视口已在状态栏下方，
+     真机（ColorOS 挖孔屏）env 仍报状态栏高度，会把标题白白垫开 50-60px */
+  padding:12px 16px calc(56px + env(safe-area-inset-bottom, 0px)) !important;
 }
 .app-mobile .page:first-child{ border-top:none !important; }
 .app-mobile .page::after{ display:none !important; }
