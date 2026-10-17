@@ -1854,6 +1854,24 @@ body.tpledit #tplarea .tpl-x:hover{color:#c0392b}
   .page{box-shadow:none;border:none;page-break-after:always;border-radius:0;margin:0}
   .del-page{display:none!important}
 }
+
+/* ============ 移动端沉浸式（仅安卓壳内生效，桌面浏览器不受影响）============
+   生效条件：MainActivity 在 onPageFinished 给 <html> 加 .app-mobile。
+   目标：页面铺满手机屏幕、每页至少一屏高、隐藏滚动条、去掉纸质卡片观感 */
+.app-mobile{ -ms-overflow-style:none; scrollbar-width:none; }
+.app-mobile ::-webkit-scrollbar{ width:0; height:0; display:none; }
+.app-mobile body{
+  padding:0 0 calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  background:var(--paper) !important;
+}
+.app-mobile #book{ max-width:none !important; }
+.app-mobile .page{
+  border:none !important; border-radius:0 !important; box-shadow:none !important;
+  margin-bottom:0 !important;
+  min-height:100vh !important; min-height:100dvh !important;
+  padding:calc(20px + env(safe-area-inset-top, 0px)) 16px calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.app-mobile .page::after{ display:none !important; }
 </style>
 </head>
 <body data-page-node-id="vxzDZEzIBAhJww9FxLnzKG">

@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WebView.setWebContentsDebuggingEnabled(true); // 便于真机远程调试（chrome://inspect）
 
         web = new WebView(this);
         setContentView(web);
@@ -46,7 +47,7 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(true);
         s.setUseWideViewPort(true);
-        s.setLoadWithOverviewMode(false);
+        s.setLoadWithOverviewMode(true);           // 内容万一超宽时自动缩到一屏内，消除真机横溢
         s.setSupportZoom(false);
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
@@ -72,6 +73,13 @@ public class MainActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return loader.shouldInterceptRequest(request.getUrl());
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                /* 标记移动端：触发页面里的 .app-mobile 沉浸式样式（仅在壳内生效，桌面浏览器不受影响） */
+                view.evaluateJavascript("document.documentElement.classList.add('app-mobile');", null);
             }
         });
 
