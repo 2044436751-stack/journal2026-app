@@ -48,16 +48,16 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
-      - name: 发布 APK 到 Release（稳定直链，手机浏览器可直接下）
-        uses: ncipollo/release-action@v1
-        with:
-          tag: apk-latest
-          name: Journal2026 最新 APK
-          body: |
-            自动构建的调试版 APK，对应最新 main 提交的 versionCode。
-            下载后传到手机安装即可（覆盖安装不丢日记数据）。
-          allowUpdates: true        # 同名 tag 直接更新，不堆积历史 release
-          replacesArtifacts: true
-          makeLatest: true
-          artifacts: app/build/outputs/apk/debug/*.apk
-          artifactErrorsFailBuild: true
+      - name: 发布 APK 到 Release（gh CLI，稳定直链可匿名下载）
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 清掉旧的同名 release 与 tag，保证每次可重发
+          gh release delete apk-latest --yes || true
+          git push origin :refs/tags/apk-latest || true
+          # 重建 release 并挂上 APK 资产
+          gh release create apk-latest \
+            app/build/outputs/apk/debug/app-debug.apk \
+            --title "Journal2026 最新 APK" \
+            --notes "自动构建的调试版 APK（对应最新 main 提交的 versionCode）。下载后传到手机覆盖安装即可，不丢日记数据。" \
+            --latest
