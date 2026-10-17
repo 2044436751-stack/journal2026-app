@@ -17,11 +17,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: 装 Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: 装 Android 35 平台与构建工具
         run: |
+          # 构建机（ubuntu-latest）自带 Android SDK，不再用 setup-android@v3（它偶发失败）
+          if ! command -v sdkmanager >/dev/null 2>&1; then
+            export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools/bin:$PATH"
+          fi
           yes | sdkmanager --licenses > /dev/null || true
           sdkmanager --install "platforms;android-35" "build-tools;35.0.0" > /dev/null
           echo "sdk.dir=$ANDROID_HOME" > local.properties
