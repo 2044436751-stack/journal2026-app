@@ -5,6 +5,10 @@ on:
   push:
     branches: [ main, master ]
 
+# 允许 Actions 用默认 GITHUB_TOKEN 创建/更新 Release（上传 APK 资产）
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -37,9 +41,23 @@ jobs:
       - name: 构建 Debug APK
         run: gradle :app:assembleDebug --no-daemon
 
-      - name: 上传 APK
+      - name: 上传 APK（Artifacts，需登录，30天过期）
         uses: actions/upload-artifact@v4
         with:
           name: journal2026-debug
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      - name: 发布 APK 到 Release（稳定直链，手机浏览器可直接下）
+        uses: ncipollo/release-action@v1
+        with:
+          tag: apk-latest
+          name: Journal2026 最新 APK
+          body: |
+            自动构建的调试版 APK，对应最新 main 提交的 versionCode。
+            下载后传到手机安装即可（覆盖安装不丢日记数据）。
+          allowUpdates: true        # 同名 tag 直接更新，不堆积历史 release
+          replacesArtifacts: true
+          makeLatest: true
+          artifacts: app/build/outputs/apk/debug/*.apk
+          artifactErrorsFailBuild: true
