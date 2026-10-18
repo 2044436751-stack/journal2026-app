@@ -124,6 +124,9 @@ table td.n{border-bottom:1px solid var(--line2)}
 }
 .box.on{background:var(--ink);border-color:var(--ink)}
 .box.on::after{content:"";position:absolute;left:3.5px;top:1px;width:4px;height:7px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(42deg)}
+/* 16px：文字首行行盒 25.6、方框 13 → 上边距 6.3 才让两者中心落在同一横线 */
+.chk > .box{margin-top:6.3px}
+.chk .kmark{margin-top:6.3px}
 .chk.done .txt{color:var(--ink3);text-decoration:line-through}
 /* 日计划 Todo：条目可选类型（任务 / 无序 / 有序 / 纯文本）。
    任务＝勾选框；无序＝圆点；有序＝1. 2.；纯文本＝留个空格子保持对齐。 */
@@ -173,6 +176,16 @@ table td.n{border-bottom:1px solid var(--line2)}
 .mini-m .mg{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
 .mini-m .mg span{text-align:center;font-size:9px;color:var(--ink3);padding:1.5px 0;border-radius:1px}
 .mini-m .mg span.wk{color:#bbb}
+/* 今天红圈 / 重要日期绿圈：圈用 ::after 绝对居中，不改变格子布局；15px 比字大，数字居中不贴边 */
+.mini-m .mg span.imp,.mini-m .mg span.today{font-weight:600;position:relative;
+  display:flex;align-items:center;justify-content:center;padding:0;height:15px;
+  font-variant-numeric:tabular-nums}
+.mini-m .mg span.imp{color:#0F6E56}
+.mini-m .mg span.today{color:#c0392b}
+.mini-m .mg span.imp::after,.mini-m .mg span.today::after{
+  content:"";position:absolute;left:50%;top:50%;width:15px;height:15px;
+  transform:translate(-50%,-50%);border:1px solid currentColor;border-radius:50%;
+  box-sizing:border-box;pointer-events:none}
 
 /* ============ 打卡网格 ============ */
 .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
@@ -257,6 +270,10 @@ table td.n{border-bottom:1px solid var(--line2)}
 .fj-date{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
 .fj-date .dfield{border-bottom-color:var(--line)}
 .fj-date .dwd{color:var(--ink2);font-weight:600;font-size:11.5px}
+/* 日期数字不要自带下划线/内边距：否则内容在盒内偏上 1–2px，和「周二」中心错开 */
+.fj-date .fj-d{border-bottom:none;padding-bottom:0}
+/* 日期 / 星期 / 饱腹感整体下移一点，和行内其他元素视觉更居中 */
+.fj-date,.fj-dh .hint{position:relative;top:1px}
 /* 整行垂直居中：餐次标签、来源图标、饱腹感圆点三组的中心点因此锁在同一条横线上
    （文字写多行、行被撑高时也一样对齐） */
 .fj-row{display:flex;align-items:center;gap:6px;padding:5px 8px;border-top:1px solid var(--line2)}
@@ -264,6 +281,7 @@ table td.n{border-bottom:1px solid var(--line2)}
 .fj-tag{
   flex:0 0 22px;font-size:11px;letter-spacing:.06em;color:var(--ink2);
   border:1px solid var(--line);border-radius:2px;text-align:center;padding:1px 0;
+  height:21.6px;display:flex;align-items:center;justify-content:center;
 }
 .fj-in{flex:1;min-height:1.3em}
 .srcs{display:flex;gap:3px;flex:0 0 auto}
@@ -275,7 +293,8 @@ table td.n{border-bottom:1px solid var(--line2)}
 .fit-row.fit-menu{display:none}
 /* 条目之间不画线：整块只在顶部留一条，与上方饮食记录分隔 */
 .fit-row + .fit-row{border-top:none}
-.fit-row .ftag{flex:0 0 22px;font-size:10.5px;color:var(--accent);letter-spacing:.04em}
+.fit-row .ftag{flex:0 0 22px;font-size:10.5px;color:var(--accent);letter-spacing:.04em;
+  display:flex;align-items:center;justify-content:center}
 /* FIT 只是栏目标题 → 只有第一行显示；后面的行留同样的 22px，文字左缘与第一行对齐 */
 .fit-row + .fit-row .ftag{visibility:hidden}
 .fit-row .yp-mark{
@@ -287,6 +306,8 @@ table td.n{border-bottom:1px solid var(--line2)}
 .fit-row.ul .yp-mark::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--ink2)}
 .fit-row.ol .yp-mark{font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 .fit-row.plain .fitplus{font-size:11px;color:var(--ink3);opacity:.5}
+/* plain 有文字：收起 ＋，文字自然落在和 B/L/D 同一列（左缘 53） */
+.fit-row.plain.has-txt .yp-mark{display:none}
 .fit-row .fin{flex:1;min-height:1.3em}
 .fit-row .yp-sw,.fit-row .yp-st,.fit-row .yp-del{--item-lh:15px;font-size:12.5px}
 .fit-row.done .fin{color:var(--ink3);text-decoration:line-through}
@@ -453,6 +474,8 @@ td>.stars.mini{display:inline-flex;margin-top:2px}
 /* 日记页：日期选择器紧跟在标题第二字后，不留大空白（老存档内联样式也覆盖） */
 .page[data-tpl="diary"] > div:first-child{justify-content:flex-start!important;gap:10px!important}
 .page[data-tpl="diary"] > div:first-child > div:last-child{flex:0 1 auto!important}
+/* 日记页小节序号：直接用「1. 2. 3.」文本，和正文同一基线，不再画圈 */
+.lbl .num{font-variant-numeric:tabular-nums;margin-right:.15em}
 .field .fv{flex:1;border-bottom:1px solid var(--line2);min-height:1.3em;padding-bottom:1px}
 /* 读书追踪的两列表单（Author/Started、Genre/Finished）：
    左边文字框的高度跟着字号走（1.3em）、右边日期框跟着内容走 ——
@@ -536,6 +559,7 @@ td.selcell{padding:3px 4px!important}
 .dfield .dinput{position:absolute;left:0;top:0;width:1px;min-width:0;max-width:1px;
   height:1px;padding:0;margin:0;border:0;opacity:0;pointer-events:none;overflow:hidden}
 .dshow{flex:1 1 auto;min-width:0;height:27px;display:flex;align-items:center;gap:4px;
+  touch-action:manipulation;
   cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
 .dshow .dtxt{flex:0 1 auto;min-width:0;font-size:13.5px;color:var(--ink);
   font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -676,6 +700,8 @@ td.selcell{padding:3px 4px!important}
 .yp-st{text-decoration:line-through;text-decoration-thickness:1px}
 .yp-sw:active,.yp-del:active,.yp-st:active{opacity:1;color:#c0392b}
 .yp-menu{display:flex;gap:5px;flex-wrap:wrap;padding:4px 0 6px}
+/* 删除线选项：去掉「==」图标，只保留「删除线」三个字，中间划一条横线 */
+.yp-menu button[data-kind="strike"] > span:last-child{text-decoration:line-through;text-decoration-thickness:1px}
 .yp-menu button{
   border:1px solid var(--line);background:#fff;border-radius:11px;font-size:12.5px;
   padding:0 8px;color:var(--ink2);font-family:inherit;cursor:pointer;
@@ -713,13 +739,15 @@ td.selcell{padding:3px 4px!important}
 /* 月日历 / 月任务：标题在左、切片器紧随其后（与年计划同一套排法）
    DOM 里切片器写在标题前面，用 order 换过来即可，不动模板结构 */
 .page[data-tpl="monthcal"] .mc-titlerow,.page[data-tpl="monthtask"] .mc-titlerow,
-.page[data-tpl="habit"] .mc-titlerow,.page[data-tpl="booklist"] .mc-titlerow,.page[data-tpl="weight"] .mc-titlerow{justify-content:flex-start;gap:10px}
+.page[data-tpl="habit"] .mc-titlerow,.page[data-tpl="booklist"] .mc-titlerow,.page[data-tpl="weight"] .mc-titlerow,
+.page[data-tpl="yearcal"] .mc-titlerow{justify-content:flex-start;gap:10px}
 /* 打卡页：标题 + 两个切片器一行放不下 → 只缩这一页的切片器，不换行 */
 .page[data-tpl="habit"] .mc-titlerow{flex-wrap:nowrap;gap:6px}
 .page[data-tpl="habit"] .mc-titlerow .mc-sel{font-size:12.5px;padding:2px 7px;gap:2px}
 .page[data-tpl="monthcal"] .mc-title,.page[data-tpl="monthtask"] .mc-title{order:1;flex:0 0 auto;text-align:left}
 .page[data-tpl="monthcal"] .mc-sel,.page[data-tpl="monthtask"] .mc-sel,
-.page[data-tpl="habit"] .mc-sel,.page[data-tpl="booklist"] .mc-sel,.page[data-tpl="weight"] .mc-sel{order:2;position:static;transform:none}
+.page[data-tpl="habit"] .mc-sel,.page[data-tpl="booklist"] .mc-sel,.page[data-tpl="weight"] .mc-sel,
+.page[data-tpl="yearcal"] .mc-sel{order:2;position:static;transform:none}
 /* 三页用 .p-title 作切片器前的标题：清掉自带 margin、不伸缩，保证与切片器同行不压字 */
 .mc-titlerow .p-title{margin:0;flex:0 0 auto}
 .mc-head .sub{margin:0}
@@ -1002,7 +1030,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* 周记正文只保留两根格线占位：格线由 .lined 渐变每 26px 画一根（画在每格的 21px 处），
    框高 48px 时正好是 21 / 47 两根，且第二根贴着框底 → 周一紧挨第二根线。
    下外边距归零 + 星期行上内边距 4px，两者相加＝「线到周一」4px。 */
-.page[data-tpl="weekly"] .wk-journal{min-height:59px}
+.page[data-tpl="weekly"] .wk-journal{min-height:64px}
 .wk-day{border-bottom:1px solid var(--line2);padding:4px 0 8px}
 .wk-day:last-child{border-bottom:none}
 .wk-drow{display:flex;align-items:center;gap:7px}
@@ -1040,8 +1068,10 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .yp-item.del .yp-txt{text-decoration:line-through;color:var(--ink3)}
 /* 纯文本：没有标记，首字直接落在 15px 标记列的中心（与勾选框/圆点/序号同轴 39.5px）。
    汉字advance比1em窄一点，实测首字中心会偏左 1.2px → 用 padding 补回来 */
-.yp-item.plain .yp-mark{display:none}
-.yp-item.plain .yp-txt{padding-left:1.2px}
+/* 纯文本没有符号，但仍保留 15px 标记列占位（visibility 而非 display）——
+   这样它的文字起点/中心与任务、无序、有序完全同一列，混排时不会左移 */
+.yp-item.plain .yp-mark{visibility:hidden}
+.yp-item.plain .yp-txt{padding-left:0}
 /* 选中的文字被加删除线：execCommand 产生的是 <s> / <strike> */
 .yp-txt s,.yp-txt strike{text-decoration:line-through;color:var(--ink3)}
 /* 整行删除线（划整行时）：文字沿用浏览器自己的删除线（跟随文字长度、换行也覆盖），
@@ -1238,9 +1268,9 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 }
 .lined{
   min-height:160px;padding:0;
-  /* 1px 细线，格距 26px，线画在文字底部下方 */
-  background-image:linear-gradient(to bottom,transparent 21px,var(--line2) 21px,var(--line2) 22px,transparent 22px);
-  background-size:100% 26px;background-position:0 0;line-height:32px;
+  /* 16px 下：格距 32px＝行高，线画在文字底部下方（27–28px），文字不压线 */
+  background-image:linear-gradient(to bottom,transparent 27px,var(--line2) 27px,var(--line2) 28px,transparent 28px);
+  background-size:100% 32px;background-position:0 0;line-height:32px;
 }
 .lined.l2{min-height:64px}
 .lined.l3{min-height:96px}
@@ -2215,6 +2245,28 @@ function syncDates(scope){
 /* 老存档：日期字段补「显示层」（自定义日期选择器 2026-10-17）
    旧结构 .dfield > [input][.dwd] → 新结构 .dfield > [input][.dshow > .dtxt + .dwd + .dico]
    原 .dwd 节点整块搬进去，星期文字与状态都保留 */
+/* 老存档：年度日历页头改成和其他页面一致的 mc-head + 年份切片器 */
+function migrateYearcal(scope){
+  let dirty=false;
+  $$('.page[data-tpl="yearcal"]',scope||book).forEach(pg=>{
+    const oldHead=$(".yp-head",pg);
+    const oldY=$("[data-cyear]",pg)||$(".yp-year",pg);
+    const y=oldY?parseInt(oldY.textContent,10):TODAY.getFullYear();
+    if(oldHead){
+      oldHead.className="mc-head";
+      oldHead.innerHTML='<div class="mc-titlerow">'+
+        '<h2 class="p-title">年度日历</h2>'+
+        `<button type="button" class="mc-sel" data-cyearsel="1"><span data-cyear="1">${y}</span> 年<span class="caret">▾</span></button>`+
+        '<div class="mc-pop" data-cyearpop="1"></div>'+
+        '</div>';
+      dirty=true;
+    }
+    /* 每次加载都重画 12 格：补 data-md、并按「重要日期」打绿圈 */
+    const g=$("[data-ygrid]",pg);
+    if(g) g.innerHTML=yearGrid(y, ycalImps(pg));
+  });
+  return dirty;
+}
 function migrateDateShow(scope){
   let dirty=false;
   $$(".dfield",scope||book).forEach(f=>{
@@ -2243,6 +2295,7 @@ function migrateDateShow(scope){
    · 选日期 / 今天 / 清除 → 写回 input 并派发 change（所有既有联动照旧）；
    · 点遮罩空白、再点触发器、页面滚动 → 关闭。 */
 const DP={ el:null, box:null, ttl:null, grid:null, inp:null, y:0, m:0 };
+let DP_SY=0, DP_LOCK=false;
 
 function dpEnsure(){
   if(DP.el) return;
@@ -2281,7 +2334,13 @@ function dpEnsure(){
     if(e.target.closest("[data-dptoday]")){ dpPick(ddISO(bjDate())); return; }
     if(e.target.closest("[data-dpclear]")){ dpClear(); return; }
   });
-  window.addEventListener("scroll",()=>{ if(DP.el&&DP.el.classList.contains("on")) dpClose(); },{passive:true});
+  window.addEventListener("scroll",()=>{
+    if(DP_LOCK){
+      if(Math.abs(window.scrollY-DP_SY)>0.5) window.scrollTo(0,DP_SY);
+      return;
+    }
+    if(DP.el&&DP.el.classList.contains("on")) dpClose();
+  },{passive:true});
   /* 点日期显示层时先掐掉默认行为：否则部分机型会把页面轻微下滚一下 */
   document.addEventListener("pointerdown",function(ev){
     if(ev.target&&ev.target.closest&&ev.target.closest("[data-dshow]")&&ev.cancelable){
@@ -2293,6 +2352,9 @@ function dpEnsure(){
 function dpOpen(inp){
   dpEnsure();
   DP.inp=inp;
+  DP_SY=window.scrollY;
+  DP_LOCK=true;
+  setTimeout(()=>{ DP_LOCK=false; }, 300);
   const iso=/^\d{4}-\d{2}-\d{2}$/.test(inp.value||"")? inp.value : "";
   const d=iso? new Date(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10)) : bjDate();
   DP.y=d.getFullYear(); DP.m=d.getMonth();
@@ -2310,9 +2372,13 @@ function dpOpen(inp){
   DP.box.style.top=top+"px";
   if(f) f.classList.add("on");
   dpRender();
+  requestAnimationFrame(()=>{
+    if(DP_LOCK && Math.abs(window.scrollY-DP_SY)>0.5) window.scrollTo(0,DP_SY);
+  });
 }
 
 function dpClose(){
+  DP_LOCK=false;
   if(DP.el) DP.el.classList.remove("on");
   $$(".dfield.on").forEach(f=>f.classList.remove("on"));
   DP.inp=null;
@@ -2970,7 +3036,7 @@ const MENU_ICON={
   task:'<span class="box"></span>',
   ul:'<span class="dot"></span>',
   ol:'<span class="num">1.</span>',
-  strike:'<span class="no"></span>'
+  strike:''
 };
 const MENU_LABEL={task:"任务", ul:"无序", ol:"有序", plain:"纯文本", strike:"删除线"};
 function openAddMenu(items, kinds){
@@ -3409,6 +3475,13 @@ function closeFitMenu(){
   $$(".fit-row.fit-menu",document).forEach(r=>r.classList.remove("fit-menu"));
   FIT_MENU_ROW=null;
 }
+/* FIT 行：plain 类型有文字时，隐藏行首的 ＋，让第一个字占据它的位置 */
+function fitPaintRows(scope){
+  $$(".fit-row",scope||document).forEach(row=>{
+    const fin=$(".fin",row);
+    row.classList.toggle("has-txt", !!(fin && fin.textContent.trim()));
+  });
+}
 /* 老存档 / 老自定义模板里补上标记列与 ⇄/S/×（幂等） */
 function fitNormalize(scope){
   let changed=false;
@@ -3762,7 +3835,43 @@ T.lifeflower = ()=>`
 </div>`;
 
 /* ---------- 年度日历 ---------- */
-function yearGrid(y){
+/* 年份选择面板：‹ 年份 › + 年份宫格（与月切片器同款 .mc-popin / .mc-yb / .mc-mo） */
+function ycalPopHTML(y){
+  let s='<div class="mc-popin"><div class="mc-popy">'+
+    '<button type="button" class="mc-yb" data-cyprev="1">‹</button>'+
+    `<span class="mc-yt">${y}</span>`+
+    '<button type="button" class="mc-yb" data-cynext="1">›</button>'+
+    '</div><div class="mc-popline"></div><div class="mc-popm">';
+  const start=y-6;
+  for(let i=0;i<13;i++){
+    const yy=start+i;
+    s+=`<span class="mc-mo${yy===y?" on":""}" data-cyel="${yy}">${yy}</span>`;
+  }
+  return s+'</div></div>';
+}
+/* 从「今年重要日期」表格解析 月-日 集合（支持 10/18、10-18、10.18、10月18日、2026-10-18） */
+function ycalImps(pg){
+  const set=new Set();
+  if(!pg) return set;
+  $$("table tbody td:first-child",pg).forEach(td=>{
+    const s=(td.textContent||"").trim(); if(!s) return;
+    let m=/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/.exec(s);
+    if(m){ set.add((+m[2])+"-"+(+m[3])); return; }
+    m=/^(\d{1,2})\s*[\/\-\.月]\s*(\d{1,2})/.exec(s);
+    if(m){ set.add((+m[1])+"-"+(+m[2])); }
+  });
+  return set;
+}
+/* 只切 class、不重绘：用户正在表格里打字时不会丢焦点 */
+function ycalPaint(pg){
+  pg=pg||$('.page[data-tpl="yearcal"]');
+  if(!pg) return;
+  const imps=ycalImps(pg);
+  $$(".mg span[data-md]",pg).forEach(sp=>{
+    sp.classList.toggle("imp", imps.has(sp.dataset.md));
+  });
+}
+function yearGrid(y, imps){
   const MN=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
   let out="";
   for(let m=0;m<12;m++){
@@ -3771,7 +3880,10 @@ function yearGrid(y){
     for(let i=0;i<first;i++) cells+='<span class="wk"></span>';
     for(let d=1;d<=dim;d++){
       const w=new Date(y,m,d).getDay();
-      cells+=`<span class="${(w===0||w===6)?'wk':''}">${d}</span>`;
+      const isToday=(y===TODAY.getFullYear()&&m===TODAY.getMonth()&&d===TODAY.getDate());
+      const isImp=!!(imps&&imps.has((m+1)+"-"+d));
+      const cls=[(w===0||w===6)?'wk':'', isImp?'imp':'', isToday?'today':''].filter(Boolean).join(' ');
+      cells+=`<span${cls?` class="${cls}"`:''} data-md="${m+1}-${d}">${d}</span>`;
     }
     const cur=(y===TODAY.getFullYear()&&m===TODAY.getMonth())?' style="font-weight:700;color:#c0392b"':'';
     out+=`<div class="mini-m"><div class="mh"${cur}>${MN[m]}</div><div class="mg">${cells}</div></div>`;
@@ -3783,13 +3895,12 @@ T.yearcal = ()=>{
   const y = TODAY.getFullYear();
   return `
 <div class="page" data-label="Year Calendar" data-tpl="yearcal">
-  <div class="yp-head">
-    <div class="yp-yearbox">
-      <button class="yp-ybtn" data-cprev="1">‹</button>
-      <span class="yp-year" data-cyear="1">${y}</span>
-      <button class="yp-ybtn" data-cnext="1">›</button>
+  <div class="mc-head">
+    <div class="mc-titlerow">
+      <h2 class="p-title">年度日历</h2>
+      <button type="button" class="mc-sel" data-cyearsel="1"><span data-cyear="1">${y}</span> 年<span class="caret">▾</span></button>
+      <div class="mc-pop" data-cyearpop="1"></div>
     </div>
-    <div class="yp-title2">年度日历</div>
   </div>
   <div class="mini-year" data-ygrid="1">${yearGrid(y)}</div>
   <div class="rule"></div>
@@ -4112,30 +4223,23 @@ function hbAllSets(){
 function hbStreakOf(set,today){
   if(!set||!set.size) return {n:0, alive:false};
   const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-  const t0=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  /* 从「最近一次打卡」往前数：今天没打、但已提前打了未来几天，也能看到连胜 */
   let last=null;
-  for(let i=0;i<400;i++){
-    const d=new Date(t0); d.setDate(t0.getDate()-i);
-    if(set.has(iso(d))){ last=d; break; }
-  }
+  set.forEach(s=>{ if(!last||s>last) last=s; });
   if(!last) return {n:0, alive:false};
-  if(Math.round((t0-last)/86400000)>1) return {n:0, alive:false};
-  let n=0, d=new Date(last);
+  const d0=new Date(last+"T00:00:00");
+  const t0=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  if(Math.round((t0-d0)/86400000)>1) return {n:0, alive:false};
+  let n=0, d=new Date(d0);
   while(set.has(iso(d))){ n++; d.setDate(d.getDate()-1); }
   return {n:n, alive:true};
 }
 /* 顶部一行：今天 + 还连着的习惯（断了的不出现） */
 function hbStreakRow(pg,sets){
   const box=$("[data-hbstreak]",pg); if(!box) return;
-  const t=bjDate(), map=sets||hbAllSets();
-  const chips=[];
-  Object.keys(map).forEach(nm=>{
-    const st=hbStreakOf(map[nm],t);
-    if(st.alive&&st.n>0)
-      chips.push('<span class="hb-chip">'+esc(nm)+" 已连 "+st.n+" 天</span>");
-  });
-  box.innerHTML='<span class="today">今天 '+(t.getMonth()+1)+"/"+t.getDate()+"</span>"+
-    (chips.length?chips.join(""):'<span class="hb-none">还没有连上的习惯</span>');
+  const t=bjDate();
+  /* 连胜已下线：这里只保留「今天 X/X」标识 */
+  box.innerHTML='<span class="today">今天 '+(t.getMonth()+1)+"/"+t.getDate()+"</span>";
 }
 /* 只显示 pg.dataset.hbw 那一周，并重算小计与连胜 */
 function hbWeek(pg){
@@ -4341,6 +4445,24 @@ function ddInitPage(pg){
   ddShow(pg,iso);
 }
 /* 老存档的日记页没有日区块：把表头之后的内容包进「那天」的区块，防丢数据 */
+/* 老存档：日记页 ① ② ③ 换成 CSS 圆序号（字形偏下，中心对不齐中文） */
+function migrateDiaryNum(scope){
+  let dirty=false;
+  $$('.page[data-tpl="diary"] .lbl > span:first-child',scope||book).forEach(sp=>{
+    const nm=$(".num",sp);
+    if(nm){
+      if(!/\.$/.test(nm.textContent.trim())){ nm.textContent=nm.textContent.trim()+"."; dirty=true; }
+      return;
+    }
+    const m=/^([①②③])\s*/.exec(sp.textContent);
+    if(!m) return;
+    const n={"①":"1","②":"2","③":"3"}[m[1]];
+    const rest=sp.textContent.slice(m[0].length);
+    sp.innerHTML='<span class="num">'+n+'.</span>'+rest;
+    dirty=true;
+  });
+  return dirty;
+}
 function migrateDiary(scope){
   const pages=(scope&&scope.dataset&&scope.dataset.tpl==="diary")
     ? [scope] : $$('[data-tpl="diary"]',scope||book);
@@ -6026,15 +6148,15 @@ function ddBody(){
   return `
   ${moodScaleHTML("10px")}
   <div class="sect">
-    <div class="lbl"><span>① 发生了什么</span><span class="hint">只写事实，3–5 句</span></div>
+    <div class="lbl"><span><span class="num">1.</span> 发生了什么</span><span class="hint">只写事实，3–5 句</span></div>
     <div class="lined" contenteditable="true" data-ph="今天真正占据我时间和注意力的几件事……"></div>
   </div>
   <div class="sect">
-    <div class="lbl"><span>② 我在想什么</span><span class="hint">允许抱怨，允许写"不知道"</span></div>
+    <div class="lbl"><span><span class="num">2.</span> 我在想什么</span><span class="hint">允许抱怨，允许写"不知道"</span></div>
     <div class="lined" contenteditable="true" data-ph="当时的念头、情绪、身体感受……"></div>
   </div>
   <div class="sect">
-    <div class="lbl"><span>③ 明天一小步</span><span class="hint">可选 · 最好和周重点相关</span></div>
+    <div class="lbl"><span><span class="num">3.</span> 明天一小步</span><span class="hint">可选 · 最好和周重点相关</span></div>
     <div class="chk"><span class="box"></span><div class="txt" contenteditable="true" data-ph="一件明天能做的小事"></div></div>
   </div>`;
 }
@@ -6154,6 +6276,8 @@ T.daygrid = ()=>{
 /* ---------- 饮食记录（图3 + fitness）----------
    按周存档：一页＝北京时间的一个自然周（周一~周日），固定 7 张日卡片，
    日期由所在周算出来（只展示，不能手改），切周＝换整块内容。 */
+/* 「S/D」餐次标签：极简饮料杯（杯身 + 杯口 + 液面 + 吸管），灰色线条 */
+const FJ_DRINK='<svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2.6h6l-.8 7a1 1 0 0 1-1 .9H4.8a1 1 0 0 1-1-.9Z"/><path d="M2.4 2.6h7.2"/><path d="M3.8 5.4c.5-.3 1-.3 1.5 0s1 .3 1.5 0"/><path d="M7.4 2.6 8.3.9h1"/></svg>';
 function fjDayHTML(v){
   const md=(v||"").slice(5).replace("-",".");
   return `
@@ -6164,7 +6288,7 @@ function fjDayHTML(v){
     </div>
     ${["B","L","D","S/D"].map(t=>`
     <div class="fj-row">
-      <div class="fj-tag">${t}</div>
+      <div class="fj-tag">${t==="S/D"?FJ_DRINK:t}</div>
       <div class="fj-in" contenteditable="true" data-ph="吃了什么"></div>
       <div class="srcs">
         <div class="src" data-src="hm" title="自制 Homemade">${ICO.apron}</div>
@@ -6375,7 +6499,7 @@ function migrateHabitWeeks(scope){
         row.appendChild(c);
         dirty=true;
       });
-      /* ④ 补顶部连胜行 + 改提示文案 */
+      /* ④ 补顶部「今天 X/X」行（连胜已下线，只留日期） */
       if(!$("[data-hbstreak]",mo)){
         const sect=$(".sect",mo);
         if(sect){
@@ -7764,6 +7888,7 @@ function renumber(){
 }
 
 function save(){
+  try{ fitPaintRows(book); }catch(_){}
   $$("[contenteditable]",book).forEach(e=>e.removeAttribute("data-focus"));
   /* 兜底：日计划 / 计时模式 的 Todo 是周计划那一格的镜像，任何改动后都重画一次（含周计划那边）。
      靠签名短路，内容没变时完全不碰 DOM，所以不会打断正在输入的光标。 */
@@ -7801,6 +7926,7 @@ function load(){
   if(migrateMonthPages(book)) __migrated=true;   /* 老存档：三页包进当前月区块，防丢数据 */
   if(migrateWeekly(book)) __migrated=true;       /* 老存档：周计划堆叠的周区块逐个归位，防丢数据 */
   if(migrateDiary(book)) __migrated=true;        /* 老存档：日记页正文包进当天区块，防丢数据 */
+  if(migrateDiaryNum(book)) __migrated=true;     /* 老存档：日记页 ①②③ → CSS 圆序号 */
   if(migrateMoodScale(book)) __migrated=true;    /* 老存档：心情刻度补五档文字、去掉「低 → 高」 */
   if(migrateWeeklyPlan(book)) __migrated=true;   /* 老存档：周计划页头改版＋旧清单搬进当周 */
   if(migrateFoodWeeks(book)) __migrated=true;    /* 老存档：饮食页按周存档，卡片归到各自那一周 */
@@ -7812,6 +7938,7 @@ function load(){
   if(migrateDailyTodoSync(book)) __migrated=true;  /* 老存档：日计划 Todo 搬进周计划那一天那一格 */
   if(migrateDaynoteTitle(book)) __migrated=true;   /* 老存档：每日记录的标题 div → h1（拿回 22px/600/红） */
   if(migrateDateShow(book)) __migrated=true;       /* 老存档：日期字段补自定义选择器的显示层 */
+  if(migrateYearcal(book)) __migrated=true;        /* 老存档：年度日历页头换成统一切片器 */
   renumber();
   /* 日计划页标题：Today's Focus on → Today's List（大小写照原文显示） */
   $$('.page[data-tpl="daily"] .p-title',book).forEach(el=>{
@@ -8160,7 +8287,7 @@ document.addEventListener("click",function(e){
   }
 
   /* 月日历：点页面别处收起年月面板（周切片器也复用 .mc-pop，一并收起） */
-  if($(".mc-pop.on") && !t.closest(".mc-pop") && !t.closest("[data-mcsel]") && !t.closest("[data-wksel]")) mcClosePop();
+  if($(".mc-pop.on") && !t.closest(".mc-pop") && !t.closest("[data-mcsel]") && !t.closest("[data-wksel]") && !t.closest("[data-cyearsel]")) mcClosePop();
 
   /* 点别处收起「类型菜单」（＋ / 步骤格唤出的那个）；点 ＋ 本身保留开关效果 */
   if(!t.closest(".yp-menu") && !t.closest("[data-mk]")){
@@ -8214,6 +8341,35 @@ document.addEventListener("click",function(e){
       else dpOpen(dinp);
     }
     return;
+  }
+  /* 年度日历：打开 / 收起年份切片器 */
+  const cys=t.closest("[data-cyearsel]");
+  if(cys){
+    const pg=cys.closest(".page"), pop=$("[data-cyearpop]",pg);
+    const wasOn=pop&&pop.classList.contains("on");
+    mcClosePop();
+    if(pop&&!wasOn){
+      pop.innerHTML=ycalPopHTML(parseInt($("[data-cyear]",pg).textContent,10)||TODAY.getFullYear());
+      pop.classList.add("on");
+    }
+    return;
+  }
+  /* 年度日历：面板里翻年 */
+  const cyp=t.closest("[data-cyprev]"), cyn=t.closest("[data-cynext]");
+  if(cyp||cyn){
+    const pop=(cyp||cyn).closest(".mc-pop");
+    const cur=parseInt($(".mc-yt",pop).textContent,10)||TODAY.getFullYear();
+    pop.innerHTML=ycalPopHTML(cur+(cyp?-1:1));
+    return;
+  }
+  /* 年度日历：选年 → 重绘 12 格 */
+  const cyel=t.closest("[data-cyel]");
+  if(cyel){
+    const pg=cyel.closest(".page");
+    const y=parseInt(cyel.dataset.cyel,10);
+    const ye=$("[data-cyear]",pg); if(ye) ye.textContent=y;
+    const g=$("[data-ygrid]",pg); if(g) g.innerHTML=yearGrid(y, ycalImps(pg));
+    mcClosePop(); save(); autoIndex(); return;
   }
   /* 月日历：打开 / 收起年月切片器 */
   const mcs=t.closest("[data-mcsel]");
@@ -8964,6 +9120,7 @@ document.addEventListener("input",function(e){
     t.dataset.tltuser="1"; save(); return;
   }
 
+
   /* input 的值写入属性，保证存进 innerHTML */
   if(t.tagName==="INPUT"&&t.classList){
     t.setAttribute("value",t.value);
@@ -8994,6 +9151,7 @@ document.addEventListener("input",function(e){
   /* 表格自动增行 */
   const td=t.closest("td");
   if(td){
+    if(t.closest('[data-tpl="yearcal"]')) ycalPaint(t.closest(".page"));
     const tb=td.closest("table");
     if(tb&&tb.hasAttribute("data-autorow")){
       const tr=td.parentElement, body=tr.parentElement;

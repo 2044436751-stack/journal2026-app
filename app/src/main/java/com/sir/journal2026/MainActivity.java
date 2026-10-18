@@ -2,9 +2,13 @@ package com.sir.journal2026;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.View;
+import android.view.WindowInsets;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -39,6 +43,25 @@ public class MainActivity extends Activity {
 
         web = new WebView(this);
         setContentView(web);
+
+        /* targetSdk 35 是 edge-to-edge：状态栏会盖住页面顶部。
+           这里把状态栏那条填成页面底色，并给 WebView 加等高的上内边距，
+           让正文从状态栏下方开始；状态栏图标改成深色。 */
+        web.setBackgroundColor(Color.parseColor("#FAF8F4"));
+        web.setOnApplyWindowInsetsListener((v, insets) -> {
+            int top;
+            if (Build.VERSION.SDK_INT >= 30) {
+                top = insets.getInsets(WindowInsets.Type.statusBars()).top;
+            } else {
+                top = insets.getSystemWindowInsetTop();
+            }
+            v.setPadding(0, top, 0, 0);
+            return insets;
+        });
+        if (Build.VERSION.SDK_INT >= 23) {
+            View decor = getWindow().getDecorView();
+            decor.setSystemUiVisibility(decor.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
