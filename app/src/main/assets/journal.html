@@ -49,7 +49,7 @@ body{
    半透明白底保证叠在深色加号上时依然清晰可读 */
 .del-page{
   position:absolute; right:4px; bottom:2px; z-index:61;
-  width:34px; height:42px;
+  width:34px; height:34px;
   display:flex; align-items:center; justify-content:center;
   font-size:16px; color:var(--ink3);
   background:rgba(255,255,255,.72); border:none; border-radius:5px;
@@ -118,17 +118,17 @@ table td.n{border-bottom:1px solid var(--line2)}
 /* ============ 勾选行 ============ */
 .chk{display:flex;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px solid var(--line2)}
 .box{
-  flex:0 0 auto;width:13px;height:16px;border:1px solid var(--ink2);border-radius:2px;
+  flex:0 0 auto;width:13px;height:13px;border:1px solid var(--ink2);border-radius:2px;
   /* 文字行盒 20.8px，方框 13px → 上边距 3px 使两者墨迹中心对齐（实测偏差 0.01px） */
   margin-top:3px;cursor:pointer;position:relative;
 }
 .box.on{background:var(--ink);border-color:var(--ink)}
-.box.on::after{content:"";position:absolute;left:3.5px;top:1px;width:4px;height:8.5px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(42deg)}
+.box.on::after{content:"";position:absolute;left:3.5px;top:1px;width:4px;height:7px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(42deg)}
 .chk.done .txt{color:var(--ink3);text-decoration:line-through}
 /* 日计划 Todo：条目可选类型（任务 / 无序 / 有序 / 纯文本）。
    任务＝勾选框；无序＝圆点；有序＝1. 2.；纯文本＝留个空格子保持对齐。 */
-.chk .kmark{display:none;flex:0 0 13px;width:13px;height:16px;margin-top:3px;
-  font-size:12.5px;color:var(--ink2);text-align:center;line-height:16px;
+.chk .kmark{display:none;flex:0 0 13px;width:13px;height:13px;margin-top:3px;
+  font-size:12.5px;color:var(--ink2);text-align:center;line-height:13px;
   font-variant-numeric:tabular-nums}
 .chk.grow-item[data-tdk="ul"] .box,
 .chk.grow-item[data-tdk="ol"] .box,
@@ -139,7 +139,7 @@ table td.n{border-bottom:1px solid var(--line2)}
 .chk.grow-item[data-tdk="plain"] .kmark,
 .chk.grow-item[data-tdk="strike"] .kmark{display:block}
 .chk.grow-item[data-tdk="ul"] .kmark::before{
-  content:"";display:block;width:4px;height:5px;border-radius:50%;
+  content:"";display:block;width:4px;height:4px;border-radius:50%;
   background:var(--ink2);margin:5px auto 0;
 }
 /* 删除线行：标记位一道横线，文字划掉 */
@@ -242,11 +242,11 @@ table td.n{border-bottom:1px solid var(--line2)}
 }
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--ink2)}
 .legend .li{display:flex;align-items:center;gap:3px}
-.legend svg{width:14px;height:17px}
+.legend svg{width:14px;height:14px}
 /* 高度取 17px ＝ 左边 .src 图标的高度，配合行内 align-items:flex-start 顶部对齐，
    五个圆点的中心线就自然落在图标中心线上（圆点自身尺寸再变也仍然居中） */
 .fullness{display:flex;gap:3px;align-items:center;height:21px}
-.fullness .f{width:9px;height:11px;border:1px solid var(--line);border-radius:50%;cursor:pointer}
+.fullness .f{width:9px;height:9px;border:1px solid var(--line);border-radius:50%;cursor:pointer}
 .fullness .f.on{background:var(--ink);border-color:var(--ink)}
 .fj-day{border:1px solid var(--line);border-radius:3px;margin-bottom:8px;overflow:hidden}
 .fj-dh{
@@ -267,9 +267,9 @@ table td.n{border-bottom:1px solid var(--line2)}
 }
 .fj-in{flex:1;min-height:1.3em}
 .srcs{display:flex;gap:3px;flex:0 0 auto}
-.src{width:17px;height:21px;border:1px solid var(--line);border-radius:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.35}
+.src{width:17px;height:17px;border:1px solid var(--line);border-radius:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.35}
 .src.on{opacity:1;border-color:var(--ink);background:var(--soft)}
-.src svg{width:11px;height:13.5px}
+.src svg{width:11px;height:11px}
 .fit-row{display:flex;align-items:center;gap:6px;padding:5px 8px;border-top:1px solid var(--line2);background:#fcfcfb}
 /* 类型菜单顶在这一行的位置时，行暂时让位（收菜单时由 closeFitMenu 还原） */
 .fit-row.fit-menu{display:none}
@@ -284,7 +284,7 @@ table td.n{border-bottom:1px solid var(--line2)}
   font-size:12.5px;line-height:1;color:var(--ink2);
 }
 .fit-row .yp-mark .box{margin-top:0}
-.fit-row.ul .yp-mark::before{content:"";width:4px;height:5px;border-radius:50%;background:var(--ink2)}
+.fit-row.ul .yp-mark::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--ink2)}
 .fit-row.ol .yp-mark{font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 .fit-row.plain .fitplus{font-size:11px;color:var(--ink3);opacity:.5}
 .fit-row .fin{flex:1;min-height:1.3em}
@@ -362,9 +362,9 @@ table td.n{border-bottom:1px solid var(--line2)}
 .cg-item.plain .cg-mark{display:none}
 .cg-blank[data-d]{cursor:pointer}
 .cg-blank[data-d]:active{background:var(--soft)}
-.cg-box{display:inline-block;width:10px;height:12.5px;border:1px solid var(--line);border-radius:2px;vertical-align:-1px}
+.cg-box{display:inline-block;width:10px;height:10px;border:1px solid var(--line);border-radius:2px;vertical-align:-1px}
 .cg-box.on{background:var(--ink);border-color:var(--ink)}
-.cg-box.on::after{content:"";display:block;width:4px;height:7.5px;margin:1px 0 0 2px;
+.cg-box.on::after{content:"";display:block;width:4px;height:6px;margin:1px 0 0 2px;
   border:solid #fff;border-width:0 1.2px 1.2px 0;transform:rotate(42deg)}
 .cg-txt{flex:1 1 auto;font-size:13.5px;line-height:18.5px;color:var(--ink);min-height:18.5px;
   word-break:break-word;outline:none}
@@ -381,17 +381,17 @@ table td.n{border-bottom:1px solid var(--line2)}
 .cg-imgs{display:flex;flex-direction:column;gap:3px}
 .cg-img{position:relative;border-radius:2px;overflow:hidden;background:var(--soft)}
 .cg-img img{display:block;width:100%;height:auto;max-height:106px;object-fit:cover}
-.cg-img-x{position:absolute;left:2px;top:2px;width:15px;height:18.5px;border:none;border-radius:50%;
-  background:rgba(255,255,255,.92);color:var(--ink3);font-size:12.5px;line-height:18.5px;padding:0;cursor:pointer}
+.cg-img-x{position:absolute;left:2px;top:2px;width:15px;height:15px;border:none;border-radius:50%;
+  background:rgba(255,255,255,.92);color:var(--ink3);font-size:12.5px;line-height:15px;padding:0;cursor:pointer}
 .cg-img-x:active{color:var(--accent)}
 /* 工具条：点格子才出现，纯图标无文字 */
 .cg-bar{display:none;align-items:center;gap:4px;padding-top:3px;border-top:1px solid var(--line2)}
 .cg-cell.on .cg-bar{display:flex}
-.cg-bar button{width:17px;height:21px;border:1px solid var(--line);border-radius:3px;background:#fff;
+.cg-bar button{width:17px;height:17px;border:1px solid var(--line);border-radius:3px;background:#fff;
   color:var(--ink2);font-size:12.5px;line-height:1;display:flex;align-items:center;justify-content:center;
   padding:0;cursor:pointer;font-family:inherit}
 .cg-bar button:active{background:var(--soft)}
-.cg-bar svg{width:11px;height:13.5px;display:block}
+.cg-bar svg{width:11px;height:11px;display:block}
 .cg-bar .cg-s{font-size:11px}
 /* 类型菜单顶掉这一条（复用 .yp-menu 观感） */
 .cg-item.cg-menuing{display:none}
@@ -401,7 +401,7 @@ table td.n{border-bottom:1px solid var(--line2)}
 .cg-cat{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:4px;cursor:pointer;
   user-select:none;-webkit-tap-highlight-color:transparent;position:relative}
 .cg-cat.on{background:#fbecea}
-.cg-catdot{width:5px;height:6px;border-radius:50%;background:var(--accent);flex:0 0 5px}
+.cg-catdot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex:0 0 5px}
 .cg-catdot.gap{background:none}
 .cg-cat .nm{font-size:15px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cg-cat.on .nm{color:var(--accent);font-weight:500}
@@ -427,26 +427,26 @@ table td.n{border-bottom:1px solid var(--line2)}
 .cg-mood button{flex:0 0 26px;height:32px;border:none;background:var(--soft);border-radius:4px;font-size:18.5px;
   line-height:1;padding:0;cursor:pointer}
 .cg-mood button:active{background:#efece5}
-.cg-mood .sep{flex:0 0 1px;width:1px;height:24.5px;background:var(--line2);margin:0 3px}
+.cg-mood .sep{flex:0 0 1px;width:1px;height:20px;background:var(--line2);margin:0 3px}
 /* 心情模式：整格让给一个 44px 表情 + 情绪名，文字条目与图片只是收起（不删） */
 .cg-cell .cg-moodbox{display:none}
 .cg-cell.mood .cg-moodbox{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;
   align-items:center;justify-content:center;gap:2px}
 .cg-cell.mood .cg-items,.cg-cell.mood .cg-imgs{display:none}
 .cg-face{font-size:54px;line-height:1;cursor:pointer;user-select:none}
-.cg-mname{font-size:13.5px;line-height:17px;color:var(--ink3);text-align:center;outline:none;
+.cg-mname{font-size:13.5px;line-height:14px;color:var(--ink3);text-align:center;outline:none;
   max-width:100%;min-width:22px;padding:0 2px;word-break:break-word;cursor:text}
 .cg-mname:empty::before{content:attr(data-ph);opacity:.55}
 .cg-cell.mood [data-cgact="mood"]{background:#fbecea;border-color:var(--accent);color:var(--accent)}
 
 /* ============ 阅读 ============ */
 .stars{display:inline-flex;gap:2px;flex:0 0 auto}
-.stars .s{width:11px;height:13.5px;cursor:pointer;opacity:.25}
+.stars .s{width:11px;height:11px;cursor:pointer;opacity:.25}
 .stars .s.on{opacity:1}
-.stars svg{width:11px;height:13.5px;display:block}
+.stars svg{width:11px;height:11px;display:block}
 .stars.mini{gap:1px;align-items:center}
-.stars.mini .s{width:9px;height:11px}
-.stars.mini svg{width:9px;height:11px}
+.stars.mini .s{width:9px;height:9px}
+.stars.mini svg{width:9px;height:9px}
 td>.stars.mini{display:inline-flex;margin-top:2px}
 .field{display:flex;align-items:baseline;gap:6px;margin:5px 0}
 .field .fl{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);flex:0 0 auto}
@@ -551,7 +551,7 @@ td.selcell{padding:3px 4px!important}
 #dpmask .dp{position:absolute;width:242px;background:#fff;border:1px solid var(--line);
   border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:10px 12px 12px}
 .dp-head{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:8px}
-.dp-nav{width:20px;height:24.5px;border:1px solid var(--line);border-radius:50%;background:none;
+.dp-nav{width:20px;height:20px;border:1px solid var(--line);border-radius:50%;background:none;
   color:var(--ink3);font-size:15px;line-height:1;padding:0;cursor:pointer;
   display:flex;align-items:center;justify-content:center;font-family:inherit}
 .dp-nav:active{background:var(--soft)}
@@ -567,7 +567,7 @@ td.selcell{padding:3px 4px!important}
 .dp-d.out{color:#c9c9c6}
 .dp-d.today{color:var(--red);font-weight:600}
 .dp-d.today::after{content:"";position:absolute;left:50%;bottom:3px;transform:translateX(-50%);
-  width:3px;height:3.5px;border-radius:50%;background:var(--red)}
+  width:3px;height:3px;border-radius:50%;background:var(--red)}
 .dp-d.sel{background:#fbecea;color:var(--red);font-weight:600}
 .dp-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;
   padding-top:8px;border-top:1px solid var(--line2)}
@@ -613,7 +613,7 @@ td.selcell{padding:3px 4px!important}
 .yp-yo:active{background:var(--soft)}
 .yp-yearbox{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .yp-ybtn{
-  width:22px;height:27px;border:1px solid var(--line);border-radius:50%;
+  width:22px;height:22px;border:1px solid var(--line);border-radius:50%;
   background:none;color:var(--ink3);font-size:16px;line-height:1;cursor:pointer;
   font-family:inherit;padding:0;
 }
@@ -625,7 +625,7 @@ td.selcell{padding:3px 4px!important}
 .yp-mname{font-size:17px;color:var(--ink);letter-spacing:.02em}
 .yp-month.cur .yp-mname{color:#c0392b;font-weight:600}
 .yp-add{
-  flex:0 0 auto;width:21px;height:25.5px;border-radius:50%;border:1px solid var(--line);
+  flex:0 0 auto;width:21px;height:20.8px;border-radius:50%;border:1px solid var(--line);
   background:none;color:var(--ink3);font-size:15px;line-height:1;padding:0;
   cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;
 }
@@ -642,7 +642,7 @@ td.selcell{padding:3px 4px!important}
 .yp-mark .box{margin-top:0}
 /* 圆点用几何形状而非字符，避免字形基线不对称造成的偏移 */
 .yp-item.ul .yp-mark::before{
-  content:"";width:4px;height:5px;border-radius:50%;background:var(--ink2);
+  content:"";width:4px;height:4px;border-radius:50%;background:var(--ink2);
 }
 .yp-item.ol .yp-mark{font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 .yp-txt{flex:1;min-height:var(--item-lh);font-size:15.5px;line-height:var(--item-lh);padding:0}
@@ -660,7 +660,7 @@ td.selcell{padding:3px 4px!important}
 /* ---- 缩进按钮（Tab 符号，同一个按钮两态）----
    没缩进 → 缩进符号；这一行已缩进 → 自动翻成反向符号。
    只有「第 2 行起」能用：列表第一行的按钮不显示（visibility 保留占位，别的按钮不错位）。 */
-.yp-iw svg{width:12px;height:15px;display:block}
+.yp-iw svg{width:12px;height:12px;display:block}
 .yp-iw .out{display:none}
 .yp-item.ind > .yp-iw .in{display:none}
 .yp-item.ind > .yp-iw .out{display:block}
@@ -682,11 +682,11 @@ td.selcell{padding:3px 4px!important}
   /* 定高 + 居中 → 图标与文字的垂直中心在同一条横线上（纯文本无图标，其首字自然落在同一线） */
   display:inline-flex;align-items:center;justify-content:center;gap:4px;height:27px;
 }
-.yp-menu button .mi{display:inline-flex;align-items:center;justify-content:center;width:11px;flex:0 0 11px;height:13.5px}
-.yp-menu button .mi .box{width:9px;height:11px;margin-top:0}
-.yp-menu button .mi .dot{width:4px;height:5px;border-radius:50%;background:var(--ink2)}
+.yp-menu button .mi{display:inline-flex;align-items:center;justify-content:center;width:11px;flex:0 0 11px;height:11px}
+.yp-menu button .mi .box{width:9px;height:9px;margin-top:0}
+.yp-menu button .mi .dot{width:4px;height:4px;border-radius:50%;background:var(--ink2)}
 .yp-menu button .mi .num{font-size:11px;line-height:1;color:var(--ink2)}
-.yp-menu button .mi .no{width:7px;height:8.5px;position:relative}
+.yp-menu button .mi .no{width:7px;height:7px;position:relative}
 .yp-menu button .mi .no::before,.yp-menu button .mi .no::after{
   content:"";position:absolute;left:0;right:0;height:1px;background:var(--ink2);
 }
@@ -741,7 +741,7 @@ td.selcell{padding:3px 4px!important}
 .mc-popy{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:9px}
 .mc-yt{font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;min-width:3em;text-align:center}
 .mc-yb{
-  width:20px;height:24.5px;border:1px solid var(--line);border-radius:50%;
+  width:20px;height:20px;border:1px solid var(--line);border-radius:50%;
   background:none;color:var(--ink3);font-size:15px;line-height:1;
   cursor:pointer;font-family:inherit;padding:0;
 }
@@ -792,7 +792,7 @@ td.selcell{padding:3px 4px!important}
    底色用伪元素画，不参与布局 → 文字位置与其它行完全一致 */
 .mc-row.today::before{
   content:"";position:absolute;left:-2px;top:50%;transform:translateY(-50%);
-  width:58px;height:23.5px;background:#fbeaea;border-radius:4px;z-index:0;
+  width:58px;height:19px;background:#fbeaea;border-radius:4px;z-index:0;
 }
 .mc-row.today .mc-wd,.mc-row.today .mc-d{color:#c0392b;position:relative;z-index:1}
 .mc-wd{flex:0 0 26px;font-size:15px;color:var(--ink3);line-height:1}
@@ -805,7 +805,7 @@ td.selcell{padding:3px 4px!important}
   flex:0 0 26px;height:32px;display:flex;align-items:center;justify-content:center;
   cursor:pointer;-webkit-tap-highlight-color:transparent;
 }
-.mc-sym i{display:block;width:4px;height:5px;border-radius:50%;background:var(--ink2)}
+.mc-sym i{display:block;width:4px;height:4px;border-radius:50%;background:var(--ink2)}
 .mc-sym[data-sym="dash"] i{width:9px;height:1px;border-radius:0}
 .mc-row.blank .mc-sym{visibility:hidden}
 .mc-txt{
@@ -839,7 +839,7 @@ td.selcell{padding:3px 4px!important}
    只有「四格全空」的行才有资格显示；显形靠 hover / 聚焦 / 当前行标记 */
 .mt-del{
   position:absolute;right:1px;top:50%;transform:translateY(-50%);
-  width:16px;height:19.5px;padding:0;border:0;background:none;
+  width:16px;height:16px;padding:0;border:0;background:none;
   font-size:13.5px;line-height:1;color:#c4c4c4;visibility:hidden;
   -webkit-tap-highlight-color:transparent;
 }
@@ -868,7 +868,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .pdca-c{background:#fafaf8;border:1px solid var(--line2);border-radius:6px;padding:8px 10px 10px}
 .pdca-h{display:flex;align-items:center;gap:6px;margin-bottom:3px}
 .pdca-b{
-  flex:0 0 20px;width:20px;height:24.5px;border-radius:50%;background:#fff;
+  flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:#fff;
   border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;
   font-size:13.5px;color:var(--ink2);
 }
@@ -891,8 +891,8 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 }
 .ix-tpl{margin-bottom:7px}
 .ix-th{display:flex;align-items:center;gap:5px;margin:4px 0 2px}
-.ix-ico{flex:0 0 12px;width:12px;height:15px;display:flex;align-items:center;justify-content:center;font-size:0}
-.ix-ico::before{content:"";width:4px;height:5px;border-radius:50%;background:#bdbdbd}
+.ix-ico{flex:0 0 12px;width:12px;height:12px;display:flex;align-items:center;justify-content:center;font-size:0}
+.ix-ico::before{content:"";width:4px;height:4px;border-radius:50%;background:#bdbdbd}
 .ix-tn{font-size:14px;font-weight:600;color:var(--ink)}
 .ix-cnt{
   font-size:11px;color:var(--ink3);border:1px solid var(--line);
@@ -955,7 +955,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;
 }
 .wk-wrow.on{background:#fbecea}
-.wk-wdot{width:5px;height:6px;border-radius:50%;background:#c0392b;flex:0 0 5px}
+.wk-wdot{width:5px;height:5px;border-radius:50%;background:#c0392b;flex:0 0 5px}
 .wk-wdot.gap{background:none}
 .wk-wn{font-size:15px;color:var(--ink2);flex:0 0 auto}
 .wk-wrow.on .wk-wn{color:#c0392b;font-weight:500}
@@ -1010,7 +1010,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .wk-ddate{flex:1;font-size:13px;line-height:25.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
 /* 全站的 ＋ 统一 13px（与勾选框同宽、落在 15px 标记列里） */
 .wk-add{
-  flex:0 0 auto;width:13px;height:16px;border-radius:50%;
+  flex:0 0 auto;width:13px;height:13px;border-radius:50%;
   border:1px solid #c0392b;background:none;color:#c0392b;
   font-size:10.5px;line-height:1;padding:0;cursor:pointer;font-family:inherit;
   display:flex;align-items:center;justify-content:center;position:relative;
@@ -1024,7 +1024,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
    放进 15px 的 .yp-mark 标记列居中 → 中心与勾选框、圆点同一条竖直中轴线 */
 .yp-addslot{display:flex;align-items:flex-start;gap:7px;padding:3px 0}
 .yp-addslot .wk-add{
-  width:13px;height:16px;font-size:10.5px;line-height:1;
+  width:13px;height:13px;font-size:10.5px;line-height:1;
   border-radius:50%;border:1px solid #c0392b;background:none;color:#c0392b;
   padding:0;cursor:pointer;font-family:inherit;
   display:flex;align-items:center;justify-content:center;
@@ -1085,7 +1085,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .ypl-tag.dead{background:var(--soft);color:var(--ink3);border-color:var(--line2)}
 /* @ 小圈：绿底绿边绿字（Georgia 衬线），点它 = 进年计划条目详情页 */
 .ypl-at{display:inline-flex;align-items:center;justify-content:center;
-  width:15px;height:18.5px;flex:0 0 15px;border-radius:50%;
+  width:15px;height:15px;flex:0 0 15px;border-radius:50%;
   background:#E1F5EE;border:.5px solid #0F6E56;color:#0F6E56;
   font-family:Georgia,"Times New Roman","Noto Serif",serif;
   font-size:12.5px;line-height:1;font-style:normal;
@@ -1146,11 +1146,11 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .ypd-tbl .th .c1{padding-left:10px;text-align:left}
 .ypd-tbl .th .c2{padding-left:8px}   /* week 表头与数据都从左缘起，对齐 */
 .ypd-tbl .c1.dim{color:#A8A69D}
-.ypd-ck{width:18px;height:22px;border-radius:5px;display:flex;align-items:center;
+.ypd-ck{width:18px;height:18px;border-radius:5px;display:flex;align-items:center;
   justify-content:center;font-size:13.5px;line-height:1}
 /* 勾＝两条直线画的圆头勾（与习惯打卡页同一个形状），用 CSS 背景图而不是字体打的「✓」；
    没勾上时格子里是空的，不画淡勾 */
-.ypd-ck::after{content:"";width:12px;height:15px}
+.ypd-ck::after{content:"";width:12px;height:12px}
 .ypd-ck.on{background:#E1F5EE;border:.5px solid #0F6E56}
 .ypd-ck.on::after{
   background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F6E56' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.6,12.6L9.8,17.6L19.4,7.4'/%3E%3C/svg%3E")}
@@ -1170,8 +1170,8 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.10);overflow:hidden}
 .ypl-hd{display:flex;align-items:center;gap:4px;padding:8px 10px 0;
   font-size:15px;font-weight:600;color:var(--ink)}
-.ypl-hd .ypl-back{width:18px;height:22px;border:1px solid var(--line);border-radius:4px;
-  background:#fff;color:var(--ink2);font-size:16px;line-height:18.5px;padding:0;cursor:pointer}
+.ypl-hd .ypl-back{width:18px;height:18px;border:1px solid var(--line);border-radius:4px;
+  background:#fff;color:var(--ink2);font-size:16px;line-height:15px;padding:0;cursor:pointer}
 .ypl-sub{font-size:12.5px;color:var(--ink3);padding:2px 10px 6px;border-bottom:1px solid var(--line2)}
 .ypl-list{max-height:266px;overflow-y:auto;padding:4px 6px}
 .ypl-mo,.ypl-it{display:flex;align-items:center;gap:6px;width:100%;border:none;
@@ -1192,8 +1192,8 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   padding:1px 5px;border-radius:6px;margin-left:4px}
 .ypl-it .mk{flex:0 0 13px;display:inline-flex;align-items:center;justify-content:center;
   font-size:12.5px;color:var(--ink2)}
-.ypl-it .mk .box{width:9px;height:11px;border:1px solid var(--line);border-radius:2px}
-.ypl-it .mk .dot{width:4px;height:5px;border-radius:50%;background:var(--ink2)}
+.ypl-it .mk .box{width:9px;height:9px;border:1px solid var(--line);border-radius:2px}
+.ypl-it .mk .dot{width:4px;height:4px;border-radius:50%;background:var(--ink2)}
 .ypl-it .tx{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ypl-it .tx.struck{text-decoration:line-through;color:var(--ink3)}
 .ypl-it .ck{flex:0 0 14px;text-align:center;color:#c0392b;font-size:15px;font-weight:600}
@@ -1205,8 +1205,8 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .rj-head{display:flex;align-items:center;gap:4px;margin-bottom:2px}
 /* 阅读记录页头对标顶部标题标准：22px/600/红；图标同色；星星保留右上。
    全大写标题较宽：字距归零+两侧间距4px 后实测放得下（星星沿用全局原版 11px） */
-.rj-ico{width:22px;height:27px;color:#c0392b;flex:0 0 22px}
-.rj-ico svg{width:22px;height:27px}
+.rj-ico{width:22px;height:22px;color:#c0392b;flex:0 0 22px}
+.rj-ico svg{width:22px;height:22px}
 .rj-t{
   font-size:27px;font-weight:600;letter-spacing:0;line-height:1.2;
   flex:1;color:#c0392b;
@@ -1295,7 +1295,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .tt-c{flex:1;min-width:0;min-height:26px;position:relative;z-index:1}
 .tt-items{display:block}
 .tt-it{display:flex;align-items:center;gap:6px;min-width:0;min-height:26px}
-.tt-mk{flex:0 0 15px;width:15px;height:18.5px;display:flex;align-items:center;justify-content:center;
+.tt-mk{flex:0 0 15px;width:15px;height:15px;display:flex;align-items:center;justify-content:center;
   font-size:12.5px;line-height:1;color:var(--ink3);cursor:pointer;position:relative;
   font-variant-numeric:tabular-nums;-webkit-tap-highlight-color:transparent}
 /* 字号/行高沿用原来「一格一段自由文字」时的值（13 / 21），只多出左边的类型位 */
@@ -1326,11 +1326,11 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .tt-it[data-kind="plain"].has-tx .tt-mk{display:none}
 .tt-it.cont .tt-mk::before{content:none}   /* 跨时段的延续格：空着，不显示 ＋ */
 .tt-it[data-kind="task"] .tt-mk{border:1px solid var(--ink2);border-radius:2px;background:#fff;
-  width:13px;height:16px;flex:0 0 13px;margin:0 1px}
+  width:13px;height:13px;flex:0 0 13px;margin:0 1px}
 .tt-it[data-kind="task"].done .tt-mk{background:var(--ink);border-color:var(--ink)}
 .tt-it[data-kind="task"].done .tt-mk::after{content:"";position:absolute;left:3.5px;top:1px;
-  width:4px;height:8.5px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(42deg)}
-.tt-it[data-kind="ul"] .tt-mk::before{content:"";width:4px;height:5px;border-radius:50%;
+  width:4px;height:7px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(42deg)}
+.tt-it[data-kind="ul"] .tt-mk::before{content:"";width:4px;height:4px;border-radius:50%;
   background:var(--ink2)}
 .tt-it[data-kind="strike"] .tt-mk::before{content:"";width:10px;height:1px;background:var(--ink2)}
 .tt-it[data-kind="strike"] .tt-tx{text-decoration:line-through;color:var(--ink3)}
@@ -1392,7 +1392,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .tb-date .tb-d{font-size:13.5px;color:var(--ink);font-variant-numeric:tabular-nums}
 .tb-date .tb-clock{font-size:13.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
 .tb-date .tb-hm{display:flex;gap:3px;margin-left:auto}
-.tb-date .tb-hm span{width:15px;height:18.5px;border-radius:50%;font-size:11px;line-height:18.5px;
+.tb-date .tb-hm span{width:15px;height:15px;border-radius:50%;font-size:11px;line-height:15px;
   text-align:center;color:var(--ink3)}
 .tb-date .tb-hm span.on{background:var(--ink);color:#fff}
 /* 两栏头（计划 / 实际用时）＋网格 */
@@ -1454,7 +1454,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
    （无底色、深绿 8px、右缘贴表格右端 2px、与圆点同一水平线）*/
 .nowline{position:absolute;left:16px;right:22px;border-top:1px dashed rgba(15,110,86,.55);
   z-index:3;pointer-events:none}
-.nowline .nd{position:absolute;right:-2.5px;top:-2.5px;width:5px;height:6px;border-radius:50%;
+.nowline .nd{position:absolute;right:-2.5px;top:-2.5px;width:5px;height:5px;border-radius:50%;
   background:#0F6E56;opacity:.85}
 .nowline .nl{position:absolute;right:-20px;top:-4px;font-size:10px;line-height:10px;
   color:#0F6E56;letter-spacing:0;white-space:nowrap}
@@ -1462,8 +1462,8 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* 图例：计划的时段 / 实际用时 / 现在 */
 .tb-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink3);margin-top:8px}
 .tb-legend i{display:inline-block;vertical-align:middle;margin-right:4px}
-.tb-legend .i1{width:14px;height:12.5px;background:#EAF7F2;border-left:2px solid #0F6E56}
-.tb-legend .i2{width:8px;height:17px;background:#0F6E56;border-radius:2px}
+.tb-legend .i1{width:14px;height:10px;background:#EAF7F2;border-left:2px solid #0F6E56}
+.tb-legend .i2{width:8px;height:14px;background:#0F6E56;border-radius:2px}
 .tb-legend .i3{width:16px;height:0;border-top:1px dashed rgba(15,110,86,.55)}
 /* 记录数据容器（不进视觉：每条记录一个 [data-tbrec] 的 JSON） */
 .tb-recs{display:none}
@@ -1472,7 +1472,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   font-variant-numeric:tabular-nums;border:1px solid #cfe7dc;background:#EAF7F2;border-radius:8px;
   padding:0 6px;line-height:17px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tt-it.running .run-chip{display:inline-flex}
-.run-chip .d{width:5px;height:6px;border-radius:50%;background:#0F6E56;animation:tbpulse 1.6s ease infinite}
+.run-chip .d{width:5px;height:5px;border-radius:50%;background:#0F6E56;animation:tbpulse 1.6s ease infinite}
 .run-chip.paused .d{background:var(--ink3);animation:none}
 @keyframes tbpulse{0%,100%{opacity:1}50%{opacity:.35}}
 
@@ -1487,7 +1487,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .tp-hd{display:flex;align-items:flex-start;gap:8px}
 .tp-nm{flex:1;min-width:0;font-size:17px;font-weight:600;letter-spacing:.03em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tp-x{flex:0 0 22px;width:22px;height:27px;border:none;background:none;color:var(--ink3);
+.tp-x{flex:0 0 22px;width:22px;height:22px;border:none;background:none;color:var(--ink3);
   font-size:16px;line-height:1;cursor:pointer;padding:0;margin-top:1px;font-family:inherit}
 .tp-x:active{color:#c0392b}
 .tp-sub{font-size:13px;color:var(--ink3);margin:1px 0 0}
@@ -1514,7 +1514,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .tp-prog.low i{background:#c0392b}
 .tp-meta{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;
   color:var(--ink3);margin-top:9px}
-.tp-meta .dot{width:7px;height:8.5px;border-radius:50%;background:#0F6E56;flex:0 0 7px;
+.tp-meta .dot{width:7px;height:7px;border-radius:50%;background:#0F6E56;flex:0 0 7px;
   animation:tbpulse 1.6s ease infinite}
 .tp-meta.off .dot{background:var(--ink3);animation:none}
 .tp-ctl{display:flex;gap:8px;margin-top:13px}
@@ -1553,13 +1553,13 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   line-height:26px;text-align:center}
 /* 第三列：⊕＝淡灰十字（2026-10-17 定稿，用户点名的 A 版）。
    本体不带定位（这个外观可能被别处复用），行内定位单独写一行 */
-.dn-plus{position:relative;width:13px;height:16px;border:none;background:none;
+.dn-plus{position:relative;width:13px;height:13px;border:none;background:none;
   padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .dn-day .dn-plus{position:absolute;left:47px;top:50%;transform:translateY(-50%)}
 .dn-plus::before,.dn-plus::after{content:"";position:absolute;left:50%;top:50%;
   transform:translate(-50%,-50%);background:#d8d8d8;border-radius:1px}
 .dn-plus::before{width:9px;height:1.5px}
-.dn-plus::after{width:1.5px;height:11px}
+.dn-plus::after{width:1.5px;height:9px}
 .dn-plus:active::before,.dn-plus:active::after{background:#c0392b}
 /* 这一天已经有条目 → ⊕ 让位：第一条的类型位（勾选框/圆点/序号）顶在它的位置。
    类由 dnMarkRows() 维护（不用 :has() 是为了兼容老 WebView） */
@@ -1567,7 +1567,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* 周界标记（2026-10-17 定稿）：每个**星期日**下面一块高光黄 ——
    从「日」到日期结束（13 + 7 + 20 = 40px），下端贴着那条横线，像在日期下涂了一小块荧光 */
 .dn-day[data-wd="0"]::after{content:"";position:absolute;left:0;width:40px;bottom:0;
-  height:6px;background:#FFE95C;border-radius:2px 2px 0 0;pointer-events:none}
+  height:5px;background:#FFE95C;border-radius:2px 2px 0 0;pointer-events:none}
 /* 内容区：从 47px 起（与 ⊕ 同一列起步）；缩进按钮不占位 → 类型位贴左缘 = ⊕ 位 */
 .dn-body{flex:1;min-width:0}
 .dn-body > .yp-item > .yp-iw{display:none}
@@ -1592,9 +1592,9 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 
 /* ============ 天气 ============ */
 .weather{display:flex;gap:5px;flex:0 0 auto}
-.wx{width:20px;height:24.5px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.3}
+.wx{width:20px;height:20px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.3}
 .wx.on{opacity:1;border-color:var(--ink);background:var(--soft)}
-.wx svg{width:12px;height:15px}
+.wx svg{width:12px;height:12px}
 
 /* ============ 周/月 ============ */
 .dow{display:flex;gap:4px;margin:6px 0}
@@ -1615,8 +1615,8 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* ============ FAB / 抽屉 ============ */
 #fab{
   position:fixed; right:16px; bottom:calc(20px + env(safe-area-inset-bottom));
-  width:50px;height:61.5px;border-radius:25px;border:none;
-  background:var(--ink);color:#fff;font-size:32px;line-height:61.5px;text-align:center;
+  width:50px;height:50px;border-radius:25px;border:none;
+  background:var(--ink);color:#fff;font-size:32px;line-height:50px;text-align:center;
   box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;z-index:60;padding:0;
 }
 #fab:active{transform:scale(.94)}
@@ -1624,7 +1624,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* 与 ＋ 同尺寸（50px）且同右边距 → 圆心天然重合；两者间距仍是 12px */
 #idxbtn{
   position:fixed;right:16px;bottom:calc(20px + 50px + 12px + env(safe-area-inset-bottom));
-  width:50px;height:61.5px;border-radius:25px;padding:0;
+  width:50px;height:50px;border-radius:25px;padding:0;
   border:1px solid var(--line);background:#fff;color:var(--ink2);
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;z-index:60;
@@ -1717,7 +1717,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .dw-fly .no{flex:0 0 24px;text-align:center;font-size:13px;color:var(--ink3)}
 .dw-dropline{height:0;border-top:2px solid #c0392b;margin:0 4px;position:relative}
 .dw-dropline:before,.dw-dropline:after{
-  content:"";position:absolute;top:-4px;width:6px;height:7.5px;border-radius:50%;background:#c0392b;
+  content:"";position:absolute;top:-4px;width:6px;height:6px;border-radius:50%;background:#c0392b;
 }
 .dw-dropline:before{left:-3px}
 .dw-dropline:after{right:-3px}
@@ -1751,7 +1751,7 @@ body.drawn{overflow:hidden}
 .tcard .tico{font-size:18.5px;color:var(--ink3)}
 /* 每张卡片右上角的「编辑样式」铅笔 */
 .tpl-pen{
-  position:absolute;right:5px;top:5px;width:26px;height:32px;
+  position:absolute;right:5px;top:5px;width:26px;height:26px;
   display:flex;align-items:center;justify-content:center;padding:0;
   border:1px solid transparent;border-radius:50%;background:none;color:#bfbfbf;
   cursor:pointer;-webkit-tap-highlight-color:transparent;
@@ -1761,7 +1761,7 @@ body.drawn{overflow:hidden}
 .tpl-cust{color:#c0392b;font-weight:700;font-size:13.5px;margin-left:3px}
 /* ---- 长按模版卡：排序 + 删除（灰色 ✕ 只在长按激活后出现，替掉铅笔的位置） ---- */
 .tpl-del{
-  position:absolute;right:5px;top:5px;width:26px;height:32px;
+  position:absolute;right:5px;top:5px;width:26px;height:26px;
   display:flex;align-items:center;justify-content:center;padding:0;
   border:1px solid transparent;border-radius:50%;background:none;color:#bfbfbf;
   font-size:15px;line-height:1;font-family:inherit;
@@ -1780,7 +1780,7 @@ body.drawn{overflow:hidden}
 }
 .tpl-dropline{grid-column:1/-1;height:0;border-top:2px solid #c0392b;margin:0 2px;position:relative}
 .tpl-dropline:before,.tpl-dropline:after{
-  content:"";position:absolute;top:-4px;width:6px;height:7.5px;border-radius:50%;background:#c0392b;
+  content:"";position:absolute;top:-4px;width:6px;height:6px;border-radius:50%;background:#c0392b;
 }
 .tpl-dropline:before{left:-3px}
 .tpl-dropline:after{right:-3px}
@@ -1817,7 +1817,7 @@ body.tpledit #tplbar{
 /* 编辑期：每个一级块右上角的删除入口 + 临时可编辑的虚线提示 */
 body.tpledit #tplarea .tpl-blk{position:relative}
 body.tpledit #tplarea .tpl-x{
-  position:absolute;right:-17px;top:1px;width:16px;height:19.5px;padding:0;
+  position:absolute;right:-17px;top:1px;width:16px;height:16px;padding:0;
   display:flex;align-items:center;justify-content:center;
   border:none;border-radius:50%;background:rgba(255,255,255,.85);
   color:#c9c9c9;font-size:11px;line-height:1;cursor:pointer;z-index:5;
@@ -1841,7 +1841,7 @@ body.tpledit #tplarea .tpl-x:hover{color:#c0392b}
 #toast.on{opacity:1}
 /* 带动作按钮的提示条（复制后的「撤销」用）：只有这种才可点 */
 #toast.act{pointer-events:auto;display:flex;align-items:center;white-space:nowrap}
-#toast .toast-sep{width:1px;height:13.5px;background:rgba(255,255,255,.32);margin:0 9px;flex:0 0 auto}
+#toast .toast-sep{width:1px;height:11px;background:rgba(255,255,255,.32);margin:0 9px;flex:0 0 auto}
 #toast .toast-act{
   border:none;background:none;color:#ffa89c;font-size:15px;font-family:inherit;
   padding:0;cursor:pointer;font-weight:500;letter-spacing:.02em;flex:0 0 auto;
@@ -1920,7 +1920,7 @@ body.tpledit #tplarea .tpl-x:hover{color:#c0392b}
 }
 .app-mobile .page:first-child{ border-top:none !important; }
 /* 顶栏（Journal 2026 / 顶部 / 重置）也往下让，避开手机状态栏 */
-.app-mobile #top{ padding-top:32px; }
+.app-mobile #top{ padding:32px 16px 0; box-sizing:border-box; }
 .app-mobile .page::after{ display:none !important; }
 </style>
 </head>
