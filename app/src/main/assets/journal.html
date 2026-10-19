@@ -244,13 +244,15 @@ table td.n{border-bottom:1px solid var(--line2)}
 /* 饮食页按周存档：页头＝标题 + 周药丸（同一行、中心对齐，与「我的一周」一致），副标题在下一行 */
 .page[data-tpl="food"] .fj-head{position:relative;display:block}
 .page[data-tpl="food"] .fj-titlerow{position:relative;display:flex;align-items:center;gap:10px}
-.page[data-tpl="food"] .fj-head .p-title{margin:0}
+.page[data-tpl="food"] .fj-head .p-title{margin:0;font-size:22px}
 .page[data-tpl="food"] .mc-sel{position:static;transform:none;flex:0 0 auto}
 .fj-week{display:none}
 .fj-week.on{display:block}
 /* 日卡片的日期由所在周算出来，只展示、不可手改 */
+/* 日卡表头字体视觉权重以「周x」为基准（11.5px / 600 / ink2）：
+   日期数字、饱腹感都与它一致，只留内容差异 */
 .fj-d{
-  font-size:13.5px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;
+  font-size:11.5px;font-weight:600;color:var(--ink2);font-variant-numeric:tabular-nums;
   border-bottom:1px solid var(--line);padding-bottom:1px;
 }
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--ink2)}
@@ -272,6 +274,8 @@ table td.n{border-bottom:1px solid var(--line2)}
 .fj-date .dwd{color:var(--ink2);font-weight:600;font-size:11.5px}
 /* 日期数字不要自带下划线/内边距：否则内容在盒内偏上 1–2px，和「周二」中心错开 */
 .fj-date .fj-d{border-bottom:none;padding-bottom:0}
+/* 饱腹感也压到和「周x」同一档字重字号 */
+.fj-dh .hint{font-size:11.5px;font-weight:600;color:var(--ink2);letter-spacing:.04em}
 /* 日期 / 星期 / 饱腹感整体下移一点，和行内其他元素视觉更居中 */
 .fj-date,.fj-dh .hint{position:relative;top:1px}
 /* 整行垂直居中：餐次标签、来源图标、饱腹感圆点三组的中心点因此锁在同一条横线上
@@ -504,7 +508,7 @@ td>.stars.mini{display:inline-flex;margin-top:2px}
    折叠态撑满所在列；展开面板浮在表格之上，不占行高 */
 .selbox{
   display:inline-flex;align-items:center;justify-content:space-between;gap:4px;
-  width:100%;height:27px;padding:0 5px;box-sizing:border-box;
+  width:100%;height:22px;padding:0 3px;box-sizing:border-box;
   border:1px solid var(--line);border-radius:3px;background:#fff;
   font-size:13.5px;line-height:1;color:var(--ink);cursor:pointer;user-select:none;
   -webkit-tap-highlight-color:transparent;
@@ -536,7 +540,7 @@ td.selcell{padding:3px 4px!important}
 /* ============ 日期字段（选日期 → 自动星期） ============ */
 .dfield{
   display:inline-flex;align-items:center;gap:4px;flex:0 1 auto;min-width:0;
-  border-bottom:1px solid var(--line2);padding-bottom:1px;
+  border-bottom:1px solid var(--line2);padding-bottom:0;
 }
 .dinput{
   border:none;background:none;font:inherit;font-size:13.5px;color:var(--ink);
@@ -558,7 +562,7 @@ td.selcell{padding:3px 4px!important}
    只写 width:1px 的话实际盒子仍被撑到 74px */
 .dfield .dinput{position:absolute;left:0;top:0;width:1px;min-width:0;max-width:1px;
   height:1px;padding:0;margin:0;border:0;opacity:0;pointer-events:none;overflow:hidden}
-.dshow{flex:1 1 auto;min-width:0;height:27px;display:flex;align-items:center;gap:4px;
+.dshow{flex:1 1 auto;min-width:0;height:22px;display:flex;align-items:center;gap:2px;
   touch-action:manipulation;
   cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
 .dshow .dtxt{flex:0 1 auto;min-width:0;font-size:13.5px;color:var(--ink);
@@ -608,7 +612,7 @@ td.selcell{padding:3px 4px!important}
 /* ============ 年计划 ============ */
 .yp-head{position:relative;margin-bottom:6px}
 /* 年计划页头：标题在左，年份切片器紧随其后；标题字样跟着年份走 */
-.yp-top{display:flex;align-items:center;gap:10px}
+.yp-top{position:relative;width:max-content;max-width:100%;display:flex;align-items:center;gap:10px}
 .yp-ttl{
   font-size:27px;font-weight:600;color:#c0392b;letter-spacing:.06em;line-height:1.2;
   white-space:nowrap;
@@ -622,7 +626,7 @@ td.selcell{padding:3px 4px!important}
 .yp-sel:active{background:var(--soft)}
 .yp-sel .caret{font-size:11px;color:var(--ink3);font-style:normal;line-height:1}
 .yp-sel .yp-year{font-size:15px;color:var(--ink2);letter-spacing:.04em;min-width:0;text-align:left}
-.yp-pop{position:absolute;left:0;top:100%;margin-top:6px;z-index:62;display:none}
+.yp-pop{position:absolute;right:0;top:100%;margin-top:6px;z-index:62;display:none}
 .yp-pop.on{display:block}
 .yp-popin{
   background:#fff;border:1px solid var(--line);border-radius:4px;
@@ -927,7 +931,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   border-radius:8px;padding:0 5px;margin-left:2px;
 }
 .ix-row{
-  display:flex;align-items:center;gap:7px;padding:3px 2px;
+  display:flex;align-items:center;gap:7px;min-height:40px;padding:8px 2px;
   border-bottom:1px solid var(--line2);cursor:pointer;
 }
 .ix-row:active{background:var(--soft)}
@@ -935,12 +939,19 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   flex:0 0 22px;margin-left:auto;font-size:11.5px;color:var(--ink3);text-align:right;
   font-variant-numeric:tabular-nums;
 }
-.ix-sum{flex:0 1 auto;min-width:0;font-size:14px;color:var(--ink2);overflow:hidden;
+.ix-sum{flex:0 1 auto;min-width:0;font-size:11.5px;color:#5f5e5a;overflow:hidden;
   white-space:nowrap;text-overflow:ellipsis}
-/* 索引行：摘要后面的模板名小高光 */
-.ix-tp{flex:0 0 auto;max-width:76.5px;font-size:11.5px;color:#5f5e5a;
-  background:#f1efe8;border-radius:8px;padding:0 5px;line-height:1.7;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 索引行：模板名标签（浅灰底胶囊）。盒子固定 62px + 居中
+   → 长短名字占同样宽度，后面的页面名全部从同一竖线开始 */
+.ix-tp,.ix-tpgap{
+  flex:0 0 70px;min-width:70px;max-width:70px;white-space:nowrap;
+}
+.ix-tp{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:4px 5px;font-size:11.5px;color:#5f5e5a;text-align:center;line-height:1;
+  background:#f1efe8;border-radius:8px;
+}
+.ix-tpgap{height:0}   /* 组内后续行：留同样宽度，不画标签 */
 
 /* 跳转后闪烁提示 */
 .page.flash{animation:pageflash 1.1s ease-out}
@@ -1650,6 +1661,17 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;z-index:60;padding:0;
 }
 #fab:active{transform:scale(.94)}
+/* 撤回上一步：左下角悬浮圆钮，有可撤回步骤时才显示 */
+#undo{
+  position:fixed;right:16px;left:auto;
+  bottom:calc(20px + 50px + 12px + 50px + 12px + env(safe-area-inset-bottom));
+  width:50px;height:50px;border-radius:50%;padding:0;
+  border:1px solid var(--line);background:#fff;color:var(--ink3);
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);z-index:60;cursor:pointer;
+}
+#undo.show{display:flex}
+#undo:active{background:var(--soft)}
 /* 目录按钮：坐在 ＋ 上方 */
 /* 与 ＋ 同尺寸（50px）且同右边距 → 圆心天然重合；两者间距仍是 12px */
 #idxbtn{
@@ -1699,7 +1721,7 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* 页面行：缩进 12px，缩进位置用实心圆点占位 */
 .dw-r{
   position:relative;overflow:hidden;
-  height:29.5px;border-radius:3px;cursor:pointer;
+  height:40px;border-radius:3px;cursor:pointer;
 }
 /* 红块：删除（右贴，藏在内容层下方，左滑露出） */
 .dw-r .dw-del{
@@ -1712,21 +1734,30 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* 内容层：负责平移露出红块，底色与抽屉一致以遮挡 */
 .dw-r .dw-c{
   position:relative;z-index:1;
-  display:flex;align-items:center;gap:6px;height:29.5px;
+  display:flex;align-items:center;gap:7px;height:40px;
   padding:0 8px 0 12px;border-radius:3px;background:#fff;
   will-change:transform;
 }
 .dw-r .dw-c .dot{flex:0 0 4px;height:5px;border-radius:50%;background:#bdbdbd}
-.dw-r .dw-c .s{flex:0 1 auto;min-width:0;font-size:13.5px;color:var(--ink2);
+.dw-r .dw-c .s{flex:0 1 auto;min-width:0;font-size:11.5px;color:#5f5e5a;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dw-r .dw-c .no{flex:0 0 24px;margin-left:auto;text-align:center;font-size:13px;color:var(--ink3)}
-/* 页面行：摘要后面的模板名小高光 */
-.dw-r .dw-c .tp{flex:0 0 auto;max-width:81px;font-size:12.5px;color:#5f5e5a;
-  background:#f1efe8;border-radius:8px;padding:1px 6px;line-height:1.5;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dw-r .dw-c .no{flex:0 0 22px;margin-left:auto;text-align:right;font-size:12px;color:var(--ink3)}
+/* 模板名标签（浅灰底胶囊）：盒子固定 56px + 居中
+   → 长短名字占同样宽度，页面名全部从同一竖线开始 */
+.dw-r .dw-c .tp,.dw-r .dw-c .tpgap{
+  flex:0 0 68px;min-width:68px;max-width:68px;white-space:nowrap;
+}
+/* ⚠️ 类名 .tp 与弹层组件的通用 .tp 规则撞名：那条规则带 transform:translateY(6px)
+   和 border:1px，会把标签压低 6px 并加高 2px——底部伸出行裁剪区，文字被切。
+   这里显式全部归零。 */
+.dw-r .dw-c .tp{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:4px 5px;font-size:11.5px;color:#5f5e5a;text-align:center;line-height:1;
+  background:#f1efe8;border-radius:8px;
+  width:auto;border:none;box-shadow:none;transform:none;transition:none;
+}
+.dw-r .dw-c .tpgap{height:0}      /* 组内后续行：留同样宽度，不画标签 */
 .dw-r:active .dw-c{background:var(--soft)}
-.dw-r.cur .dw-c{background:var(--soft)}
-.dw-r.cur .dw-c .s{color:var(--ink)}
 .dw-r .dw-c .h{display:none;font-size:15px;color:#bdbdbd;letter-spacing:-1px}
 /* 拖动中 */
 .dw-r.lift .dw-c{background:#f2f2f0;border:1px solid var(--line);box-shadow:0 3px 10px rgba(0,0,0,.12)}
@@ -1975,6 +2006,7 @@ body.tpledit #tplarea .tpl-x:hover{color:#c0392b}
 <div id="tpldesk" data-page-node-id="FdoCWi3i27NnmErDWvvIg5"><div id="tplarea" data-page-node-id="YAjbbdi1JUHB9HxBd6QDma"></div></div>
 
 <button id="fab" data-page-node-id="ACHwxt621O57SiqcO8HF1a">+</button>
+<button id="undo" type="button" title="撤回上一步" aria-label="撤回上一步"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
 <button id="idxbtn" data-idxbtn="1" title="目录" aria-label="打开目录" data-page-node-id="bSVVsuXnHQwKO33EDVxaQ1"><svg viewBox="0 0 20 20" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" data-page-node-id="YAZKaVv4EodGRyso8ZAhHi"><path d="M3.5 6h13M3.5 10h13M3.5 14h13" data-page-node-id="qxyetmycP0AKltACGoanyv"/></svg></button>
 <div id="dwm" data-page-node-id="dSzIauHH3aCRSf8UEqSR9p"></div>
 <div id="drawer" aria-hidden="true" data-page-node-id="lo1aO8HNUwsPiQActQJJr6">
@@ -3443,15 +3475,11 @@ function fitNextKind(row){
 }
 /* 复用 strikeRow：文字格按 .yp-txt || .fin 取，符号列都是 .yp-mark */
 function fitStrikeRow(row){ return strikeRow(row); }
+/* FIT 行是固定模板，不能删：× 只清空这一行的文字与状态 */
 function fitDelRow(row){
-  const list=row.parentElement;
-  if(!list || $$(".fit-row",list).length<=1){
-    const ce=$(".fin",row); if(ce) ce.textContent="";
-    $$(".box",row).forEach(b=>b.classList.remove("on"));
-    row.classList.remove("done","struck"); row.style.removeProperty("--strike-x");
-    return;
-  }
-  row.remove(); fitRenumber(list);
+  const ce=$(".fin",row); if(ce) ce.textContent="";
+  $$(".box",row).forEach(b=>b.classList.remove("on"));
+  row.classList.remove("done","struck"); row.style.removeProperty("--strike-x");
 }
 /* 菜单就是「准备写的那一行」：临时把这一行藏起来，菜单占在它原来的位置（不新增行） */
 function openFitMenu(row){
@@ -3534,8 +3562,8 @@ T.yearly = ()=>{
     <div class="yp-top">
       <span class="yp-ttl" data-yttl="1">${y}年计划</span>
       <button type="button" class="yp-sel" data-ysel="1"><span class="yp-year" data-yyear="1">${y}</span><i class="caret">▾</i></button>
+      <div class="yp-pop" data-ypop="1"></div>
     </div>
-    <div class="yp-pop" data-ypop="1"></div>
   </div>
   <div class="yp-list">${ms}</div>
 </div>`;
@@ -3681,15 +3709,19 @@ function buildIndex(){
   const body=$("[data-ixbody]",idx), stat=$("[data-ixstat]",idx);
   if(!body) return;
 
-  const data=ixFlat();
-  let html="";
+  const data=ixFlat(), cur=currentPageNo();
+  let html="", prevTp=null;
   data.forEach(x=>{
     const tp=tplDispName(x.tpl, x.meta.n);
-    html+=`<div class="ix-row" data-goto="${x.no}">`+
+    /* 同一模板的页面连续时：标签只在组内第一行出现，后面留同样宽度的空白
+       → 页面名始终从同一竖线开始，视觉上自然成一组 */
+    html+=`<div class="ix-row${x.no===cur?" cur":""}" data-goto="${x.no}">`+
           `<span class="ix-ico"></span>`+
-          `<span class="ix-tp">${esc(tp)}</span>`+
+          (tp===prevTp ? `<span class="ix-tpgap"></span>`
+                       : `<span class="ix-tp">${esc(tp)}</span>`)+
           `<span class="ix-sum">${esc(pageSummary(x.pg))}</span>`+
           `<span class="ix-no">${x.no}</span></div>`;
+    prevTp=tp;
   });
 
   if(!data.length){
@@ -3776,6 +3808,9 @@ function ypSetYear(pg,y){
 function migrateYPHead(root){
   let dirty=false;
   $$('[data-tpl="yearly"] .yp-head',root||book).forEach(head=>{
+    /* 老结构：面板在 yp-head 下、从页面左边弹 → 移进 yp-top，挂在切片器正下方 */
+    const top=$(".yp-top",head), pop=$(".yp-pop",head);
+    if(top && pop && pop.parentElement===head){ top.appendChild(pop); dirty=true; }
     if($("[data-ysel]",head)){
       const h=$(".hint",head); if(h){ h.remove(); dirty=true; }
       return;
@@ -3786,7 +3821,8 @@ function migrateYPHead(root){
       '<div class="yp-top">'+
         `<span class="yp-ttl" data-yttl="1">${y}年计划</span>`+
         `<button type="button" class="yp-sel" data-ysel="1"><span class="yp-year" data-yyear="1">${y}</span><i class="caret">▾</i></button>`+
-      '</div><div class="yp-pop" data-ypop="1"></div>';
+        '<div class="yp-pop" data-ypop="1"></div>'+
+      '</div>';
     dirty=true;
   });
   return dirty;
@@ -7887,6 +7923,45 @@ function renumber(){
   yplRefreshAll();          /* 周计划条目上的 @标签 跟着重画（改名 / 删除都体现在这里） */
 }
 
+/* ---- 撤回上一步（防误删）：删除前把当前存档压栈，撤销时写回并重载 ---- */
+const UNDO_KEY="journal2026.undo";
+function pushUndo(){
+  try{
+    const raw=sessionStorage.getItem(UNDO_KEY);
+    const arr=raw?JSON.parse(raw):[];
+    arr.push({v:localStorage.getItem(KEY), y:window.scrollY});
+    while(arr.length>20) arr.shift();
+    sessionStorage.setItem(UNDO_KEY, JSON.stringify(arr));
+    updateUndoBtn();
+  }catch(_){}
+}
+function undoLast(){
+  try{
+    const raw=sessionStorage.getItem(UNDO_KEY);
+    const arr=raw?JSON.parse(raw):[];
+    const s=arr.pop();
+    if(!s){ toast("没有可撤回的步骤"); return; }
+    sessionStorage.setItem(UNDO_KEY, JSON.stringify(arr));
+    if(s.v!=null) localStorage.setItem(KEY, s.v);
+    sessionStorage.setItem("journal2026.undoScroll", String(s.y||0));
+    location.reload();
+  }catch(_){ toast("撤回失败"); }
+}
+function updateUndoBtn(){
+  const b=document.getElementById("undo"); if(!b) return;
+  try{
+    const raw=sessionStorage.getItem(UNDO_KEY);
+    const arr=raw?JSON.parse(raw):[];
+    b.classList.toggle("show", arr.length>0);
+  }catch(_){}
+}
+window.addEventListener("load",()=>{
+  try{
+    const y=sessionStorage.getItem("journal2026.undoScroll");
+    if(y!=null){ sessionStorage.removeItem("journal2026.undoScroll"); window.scrollTo(0, +y||0); }
+  }catch(_){}
+  updateUndoBtn();
+});
 function save(){
   try{ fitPaintRows(book); }catch(_){}
   $$("[contenteditable]",book).forEach(e=>e.removeAttribute("data-focus"));
@@ -8102,6 +8177,9 @@ document.addEventListener("click",function(e){
   if(window.__tdJustOpened){ window.__tdJustOpened=false; return; }
   if(window.__tbJustOpened){ window.__tbJustOpened=false; return; }   /* 计时页长按同上 */
 
+  /* 撤回上一步（左下角悬浮钮） */
+  if(t.closest && t.closest("#undo")){ undoLast(); return; }
+
   /* 计时模式：点格子里的 ● 徽标 → 回到计时弹窗 */
   const rchip=t.closest("[data-runchip]");
   if(rchip){
@@ -8121,6 +8199,7 @@ document.addEventListener("click",function(e){
   if(t.closest("[data-dwadd]")){ closeDrawer(); setTimeout(openSheet,240); return; }
   const delBtn=t.closest(".dw-del");
   if(delBtn){
+    pushUndo();
     if(DW_SWIPE_JUST) return;
     const dwr=delBtn.closest("[data-dwno]");
     if(dwr) dwSwipeDelete(dwr);
@@ -8275,7 +8354,7 @@ document.addEventListener("click",function(e){
   if(fr){
     if(t.closest("[data-ypst]")){ if(!fitStrikeRow(fr)) toast("先选中要加删除线的文字"); return; }
     if(t.closest("[data-ypsw]")){ fitNextKind(fr); save(); return; }
-    if(t.closest("[data-ypdel]")){ fitDelRow(fr); save(); return; }
+    if(t.closest("[data-ypdel]")){ pushUndo(); fitDelRow(fr); save(); return; }
     const fbx=t.closest(".box");
     if(fbx){ fbx.classList.toggle("on"); fr.classList.toggle("done",fbx.classList.contains("on")); save(); return; }
     if(t.closest(".fin")) return;
@@ -8786,6 +8865,7 @@ document.addEventListener("click",function(e){
   /* 年计划：删除一项 —— 若有周计划引用，先说清楚再删 */
   const yd=t.closest("[data-ypdel]");
   if(yd){
+    pushUndo();
     const it=yd.closest(".yp-item"), items=it.closest(".yp-items");
     const id=it.dataset.ypid;
     const users=[];
@@ -8825,7 +8905,13 @@ document.addEventListener("click",function(e){
       const cur=parseInt(($(".yp-year",pg)||{}).textContent,10)||TODAY.getFullYear();
       pop.innerHTML=ypPopHTML(cur);
       pop.classList.add("on");
-      const on=$(".yp-yo.on",pop); if(on&&on.scrollIntoView) on.scrollIntoView({block:"center"});
+      /* 只滚面板内部；不要用 scrollIntoView —— 它会连整页一起滚，页面就往下跳一下 */
+      const on=$(".yp-yo.on",pop);
+      if(on){
+        const pin=$(".yp-popin",pop)||pop;
+        const pr=pin.getBoundingClientRect(), or=on.getBoundingClientRect();
+        pin.scrollTop += (or.top-pr.top) - (pr.height/2 - or.height/2);
+      }
     }
     return;
   }
@@ -9038,6 +9124,7 @@ document.addEventListener("click",function(e){
   /* 删除页 */
   const del=t.closest(".del-page");
   if(del){
+    pushUndo();
     if($$(".page",book).length<=1){ toast("至少保留一页"); return; }
     const pg=del.closest(".page");
     const label=(pg.dataset.label||"这一页");
@@ -9791,13 +9878,17 @@ function currentPageNo(){
 function drawerHTML(){
   const data=ixFlat(), cur=currentPageNo();
   if(!data.length) return '<div class="dw-g">这本日记里还没有页面</div>';
-  let h="";
+  let h="", prevTp=null;
   data.forEach(x=>{
     const tp=tplDispName(x.tpl, x.meta.n);
+    /* 同索引页：同一模板连续时标签只在组内第一行出现，后面留同样宽度 */
     h+=`<div class="dw-r${x.no===cur?" cur":""}" data-dwno="${x.no}" data-dwt="${x.tpl}">`+
        `<div class="dw-del"><span class="x">✕</span><span class="t">删除</span></div>`+
-       `<div class="dw-c"><span class="dot"></span><span class="s">${esc(pageSummary(x.pg))}</span>`+
-       `<span class="tp">${esc(tp)}</span><span class="h">≡</span><span class="no">${x.no}</span></div></div>`;
+       `<div class="dw-c"><span class="dot"></span>`+
+       (tp===prevTp ? `<span class="tpgap"></span>` : `<span class="tp">${esc(tp)}</span>`)+
+       `<span class="s">${esc(pageSummary(x.pg))}</span>`+
+       `<span class="no">${x.no}</span></div></div>`;
+    prevTp=tp;
   });
   return h;
 }
