@@ -814,6 +814,10 @@ td.selcell{padding:3px 4px!important}
 /* 纯文本行不占标记列（15px + 7px 间隙）：文字与小标题左边对齐，光标初始就顶格。
    任务 / 圆点 / 序号行仍保留标记列放勾选框和符号，切类型时文字才右移 22px。 */
 .dg-q .dg-items > .yp-item.plain > .yp-mark{display:none}
+/* 中文字形重心偏下（墨迹中心比行盒中心低约 0.5px），方框按行盒居中时视觉上略高。
+   这一页把方框下移 0.5px，让框中心对准文字墨迹中心（2026-10-23 实测：500.36 → 500.86）。
+   ⚠️ 用 transform 而不是 margin-top：flex 居中会把 margin 一起居中，0.5px 只会落下 0.25px。 */
+.dg-q .dg-items .yp-item.task > .yp-mark > .box{transform:translateY(.5px)}
 /* 行尾的 ⇄ / S / × 平时不占位，点进那一行才出现 —— 格子只有约 192px 宽，宽度让给文字 */
 .dg-q .yp-sw,.dg-q .yp-st,.dg-q .yp-del,.dg-q .yp-iw{display:none}
 .dg-q .yp-item:focus-within .yp-sw,
@@ -1651,10 +1655,12 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .page[data-tpl="tasklist"] .mc-head{margin-bottom:12px}
 .page[data-tpl="tasklist"] .dfield{flex:0 1 132px}
 .page[data-tpl="tasklist"] .chk{padding:6px 0}
-/* 框与文字中心同线：不靠"墨迹"经验值（那样换设备会歪），
-   直接定死行高 —— 文字行盒 21px、框 13px 补 4px ⇒ 两者中心都在 10.5 */
+/* 框与文字中心同线：不靠"墨迹"经验值（那样换设备会歪），直接定死行高 ——
+   文字行盒 26px、框 13px ⇒ 上边距 6.5 时两者中心都在 13；
+   再补 1px 抵消中文字形重心偏下（墨迹中心比行盒中心低约 1px）⇒ 7.5（2026-10-23 实测偏差 0）。
+   原来写 4px 是 21px 行盒时代的旧值，行高改 26 后框会比文字高 3.5px。 */
 .page[data-tpl="tasklist"] .chk .txt{min-height:26px;line-height:26px}
-.page[data-tpl="tasklist"] .chk .box{margin-top:4px}
+.page[data-tpl="tasklist"] .chk .box{margin-top:7.5px}
 .page[data-tpl="tasklist"] .tl-list .chk:last-child{border-bottom:none}
 .page[data-tpl="tasklist"] .addrow{display:none}   /* 写满自动加行，不需要「＋ 新增一条」按钮 */
 .tl-day{display:none}
