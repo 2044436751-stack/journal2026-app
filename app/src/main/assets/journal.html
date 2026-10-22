@@ -1758,10 +1758,13 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   position:relative;overflow:hidden;
   height:40px;border-radius:3px;cursor:pointer;
 }
-/* 红块：删除（右贴，藏在内容层下方，左滑露出） */
+/* 红块：删除（右贴，藏在内容层下方，左滑露出）
+   ⚠️ 必须自带与行同半径的右侧圆角：行是 overflow:hidden 的 3px 圆角矩形，
+   上面白色内容层也是 3px 圆角，两层在弧线上各自抗锯齿会留一道亚像素缝，
+   红块就会从缝里透出来 —— 右缘出现一串红色小弧（2026-10-23 修）。 */
 .dw-r .dw-del{
   position:absolute;top:0;right:0;bottom:0;width:64px;z-index:0;
-  background:#c0392b;color:#fff;
+  background:#c0392b;color:#fff;border-radius:0 3px 3px 0;
   display:flex;align-items:center;justify-content:center;gap:5px;
   font-size:15px;letter-spacing:.06em;
 }
