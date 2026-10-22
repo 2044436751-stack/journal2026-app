@@ -811,6 +811,9 @@ td.selcell{padding:3px 4px!important}
 /* 文本线＝每个条目的下边框（.yp-item 默认没有下边框，这一页专门给它加上，才像「填空格」） */
 .dg-q .dg-items{padding:0}
 .dg-q .yp-item{border-bottom:1px solid var(--line2)}
+/* 纯文本行不占标记列（15px + 7px 间隙）：文字与小标题左边对齐，光标初始就顶格。
+   任务 / 圆点 / 序号行仍保留标记列放勾选框和符号，切类型时文字才右移 22px。 */
+.dg-q .dg-items > .yp-item.plain > .yp-mark{display:none}
 /* 行尾的 ⇄ / S / × 平时不占位，点进那一行才出现 —— 格子只有约 192px 宽，宽度让给文字 */
 .dg-q .yp-sw,.dg-q .yp-st,.dg-q .yp-del,.dg-q .yp-iw{display:none}
 .dg-q .yp-item:focus-within .yp-sw,
@@ -1261,6 +1264,13 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .prog{display:flex;gap:2px;margin:6px 0 2px}
 .prog .p{flex:1;height:11px;border:1px solid var(--line);border-radius:1px;cursor:pointer}
 .prog .p.on{background:var(--ink);border-color:var(--ink)}
+/* 「一键归零」：替掉原来的「点击刻度」提示，做成小胶囊按钮（2026-10-22） */
+.prog-reset{
+  font-family:inherit;font-size:11.5px;letter-spacing:.02em;color:var(--ink3);
+  background:none;border:1px solid var(--line2);border-radius:10px;
+  padding:2px 8px;line-height:1.35;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.prog-reset:active{color:var(--red);border-color:var(--red)}
 .proglbl{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3)}
 /* 横线/点阵：行高 = 格距，线画在每行底部（文字压在线上），
    最小高度取格距整数倍，保证首尾间距与行间一致 */
@@ -1296,7 +1306,10 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .wt-f .v{flex:1;min-height:1.2em;font-variant-numeric:tabular-nums}
 .chart{border:1px solid var(--line2);border-radius:3px;margin:8px 0;background:#fdfdfc}
 .chart svg{display:block;width:100%;height:160px}
-.wt-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* 两栏按内容自然行高：左 16 行 / 右 15 行，若被 grid 拉成同高，
+   右栏会把多出的高度摊进 15 行（行距 27.6 → 29.4），横线从第 2 行起就错位。
+   align-items:start 让两栏各按 27.6px 走 → 逐行横线对齐（2026-10-22 修） */
+.wt-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
 .wt-tbl td,.wt-tbl th{padding:2.5px 3px;font-size:13.5px}
 .wt-tbl input{width:100%;border:none;background:none;font:inherit;color:inherit;padding:0;outline:none}
 .delta.up{color:#c0392b}
@@ -1490,14 +1503,16 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .abar.live{animation:tbb 1.6s ease infinite}
 @keyframes tbb{0%,100%{opacity:.72}50%{opacity:1}}
-/* 现在线：虚线左端与横线左端对齐（16px 起），右端止于距右 22px；
-   端头缀 5px 小绿点（中心正落在虚线右端），圆点右边是镂空小字「x分」
-   （无底色、深绿 8px、右缘贴表格右端 2px、与圆点同一水平线）*/
-.nowline{position:absolute;left:16px;right:22px;border-top:1px dashed rgba(15,110,86,.55);
+/* 现在线：虚线左端与横线左端对齐（16px 起）；
+   右端止于距表格右缘 30px —— 这 30px 是「绿点 + x分」的专属带：
+   圆点中心钉在虚线右端（占线端 ±2.5px），「x分」右对齐到表格右缘内 2px，
+   两者之间留 ~4px 空隙，数字再长也不会被圆点压住（2026-10-22 修）。
+   ⚠️ 别把 right 改回 22px：那样点与字会重叠 4.2px。*/
+.nowline{position:absolute;left:16px;right:30px;border-top:1px dashed rgba(15,110,86,.55);
   z-index:3;pointer-events:none}
 .nowline .nd{position:absolute;right:-2.5px;top:-2.5px;width:5px;height:5px;border-radius:50%;
   background:#0F6E56;opacity:.85}
-.nowline .nl{position:absolute;right:-20px;top:-4px;font-size:10px;line-height:10px;
+.nowline .nl{position:absolute;right:-28px;top:-4px;font-size:10px;line-height:10px;
   color:#0F6E56;letter-spacing:0;white-space:nowrap}
 .nowline.off{display:none}
 /* 图例：计划的时段 / 实际用时 / 现在 */
@@ -1534,11 +1549,18 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .tp-sub{font-size:13px;color:var(--ink3);margin:1px 0 0}
 .tp-sep{height:1px;background:var(--line2);margin:10px 0 2px}
 .tp-lb{font-size:12.5px;color:var(--ink3);letter-spacing:.06em;margin:10px 0 5px}
+/* 倒计时时长那一块和上面的「计时方式」之间再松一点 */
+#durLb .tp-lb{margin-top:13px}
 .tp-mode{display:flex;gap:6px}
 .tp-mode button{flex:1;font-family:inherit;font-size:15px;line-height:1;padding:9px 0;cursor:pointer;
   border:1px solid var(--line);background:#fff;color:var(--ink2);border-radius:3px;letter-spacing:.03em}
 .tp-mode button.on{border-color:var(--ink);background:var(--soft);color:var(--ink);font-weight:600}
 .tp-dur{display:flex;gap:6px;flex-wrap:wrap}
+/* ⚠️ 必须显式写 [hidden]：上面 display:flex 会盖掉 UA 的 [hidden]{display:none}，
+   否则正计时模式下 15/25/45/60 胶囊照样显示（且标题被隐藏），
+   就会紧贴「计时方式」按钮（间距 0px），看起来像正计时也受分钟数限制。
+   2026-10-22 修：正计时只留方式切换，时长胶囊只在倒计时出现。 */
+.tp-dur[hidden]{display:none}
 .tp-dur button{font-family:inherit;font-size:13.5px;line-height:1;padding:6px 12px;cursor:pointer;
   border:1px solid var(--line);background:#fff;color:var(--ink2);border-radius:12px;
   font-variant-numeric:tabular-nums}
@@ -1605,6 +1627,9 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* 这一天已经有条目 → ⊕ 让位：第一条的类型位（勾选框/圆点/序号）顶在它的位置。
    类由 dnMarkRows() 维护（不用 :has() 是为了兼容老 WebView） */
 .dn-day.has-item .dn-plus{display:none}
+/* 点了 ⊕ 弹出「选格式」菜单时，⊕ 立刻让位（菜单开着时不并排出现两个入口）。
+   类同样由 dnMarkRows() 维护（2026-10-22 加） */
+.dn-day.menu-open .dn-plus{display:none}
 /* 周界标记（2026-10-17 定稿）：每个**星期日**下面一块高光黄 ——
    从「日」到日期结束（13 + 7 + 20 = 40px），下端贴着那条横线，像在日期下涂了一小块荧光 */
 .dn-day[data-wd="0"]::after{content:"";position:absolute;left:0;width:40px;bottom:0;
@@ -1612,7 +1637,11 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* 内容区：从 47px 起（与 ⊕ 同一列起步）；缩进按钮不占位 → 类型位贴左缘 = ⊕ 位 */
 .dn-body{flex:1;min-width:0}
 .dn-body > .yp-item > .yp-iw{display:none}
-.dn-body > .yp-item:first-child{padding-top:0}   /* 与左首三件套同一条水平线 */
+/* 首条内容下移 3.5px：.dn-head 的日期是 26px 行盒居中，而条目行盒只有 20px，
+   两者从同一条顶线起算 → 勾选框中心会比日期墨迹中心高 3.5px（实测）。
+   补上这点 padding 后，首行的勾选框 / 圆点 / 序号与左边的星期日期同一条水平线
+   （2026-10-22 修正；原来这里是 padding-top:0） */
+.dn-body > .yp-item:first-child{padding-top:3.5px}
 .dn-day.today .dn-wd{color:#c0392b;font-weight:600}
 .dn-day.today .dn-dd{color:#c0392b}
 
@@ -2696,6 +2725,21 @@ function migrateFoodWeeks(scope){
   });
   return dirty;
 }
+/* 老存档迁移：饮食页「饮料」那一行的占位语改成「喝了什么」
+   （杯子图标那一行＝S/D；靠 .fj-tag 里有没有 svg 认人，不看文字） */
+function migrateFoodDrinkPh(scope){
+  const pages=(scope&&scope.dataset&&scope.dataset.tpl==="food")
+    ? [scope] : $$('.page[data-tpl="food"]',scope||book);
+  let dirty=false;
+  pages.forEach(pg=>{
+    $$(".fj-row",pg).forEach(row=>{
+      if(!$(".fj-tag svg",row)) return;
+      const inp=$(".fj-in",row);
+      if(inp && inp.dataset.ph!=="喝了什么"){ inp.dataset.ph="喝了什么"; dirty=true; }
+    });
+  });
+  return dirty;
+}
 /* 周计划页头改版：标题「周计划」→「我的一周」、标题下加横线、
    每个周区块顶部补「周计划 + 该周日期范围」小标题与清单，
    并把页面级那份清单搬进当前那一周（它原来是切周不变的，现在按周存档） */
@@ -3502,6 +3546,8 @@ function closeFitMenu(){
   $$(".yp-menu",document).forEach(m=>m.remove());
   $$(".fit-row.fit-menu",document).forEach(r=>r.classList.remove("fit-menu"));
   FIT_MENU_ROW=null;
+  /* 菜单被收起后，每日记录那些行要把 ⊕ 重新算一遍（2026-10-22） */
+  if(typeof dnMarkRows==="function") dnMarkRows();
 }
 /* FIT 行：plain 类型有文字时，隐藏行首的 ＋，让第一个字占据它的位置 */
 function fitPaintRows(scope){
@@ -4097,6 +4143,8 @@ function dnMarkRows(scope){
   pages.forEach(pg=>{
     $$(".dn-day",pg).forEach(day=>{
       day.classList.toggle("has-item", !!$(".yp-item",day));
+      /* 菜单开着也算「已占用」：⊕ 让位给菜单，选完/收起后按 item 是否存在重算 */
+      day.classList.toggle("menu-open", !!$(".yp-menu",day));
     });
   });
 }
@@ -6325,7 +6373,7 @@ function fjDayHTML(v){
     ${["B","L","D","S/D"].map(t=>`
     <div class="fj-row">
       <div class="fj-tag">${t==="S/D"?FJ_DRINK:t}</div>
-      <div class="fj-in" contenteditable="true" data-ph="吃了什么"></div>
+      <div class="fj-in" contenteditable="true" data-ph="${t==="S/D"?"喝了什么":"吃了什么"}"></div>
       <div class="srcs">
         <div class="src" data-src="hm" title="自制 Homemade">${ICO.apron}</div>
         <div class="src" data-src="to" title="外卖 Takeout">${ICO.takeout}</div>
@@ -6409,7 +6457,7 @@ T.reading = ()=>`
     </div>
   </div>
   <div class="sect">
-    <div class="lbl"><span>Reading Progress</span><span class="hint">点击刻度</span></div>
+    <div class="lbl"><span>Reading Progress</span><button type="button" class="prog-reset" data-progreset="1">一键归零</button></div>
     <div class="prog">${Array.from({length:10},(_,i)=>`<div class="p" data-p="${i+1}"></div>`).join("")}</div>
     <div class="proglbl"><span>10%</span><span>50%</span><span>100%</span></div>
   </div>
@@ -8005,6 +8053,7 @@ function load(){
   if(migrateMoodScale(book)) __migrated=true;    /* 老存档：心情刻度补五档文字、去掉「低 → 高」 */
   if(migrateWeeklyPlan(book)) __migrated=true;   /* 老存档：周计划页头改版＋旧清单搬进当周 */
   if(migrateFoodWeeks(book)) __migrated=true;    /* 老存档：饮食页按周存档，卡片归到各自那一周 */
+  if(migrateFoodDrinkPh(book)) __migrated=true;  /* 老存档：饮料行占位「吃了什么」→「喝了什么」 */
   if(migrateDailyTimetable(book)) __migrated=true; /* 老存档：日计划时间表补 07 / 24 两行 */
   if(migrateTimerRows(book)) __migrated=true;      /* 老存档：计时页的行结构包一层 .tt-r（支持排期） */
   if(ttNormalize(book)) __migrated=true;           /* 老存档：时间表格子包成条目 */
@@ -8100,6 +8149,13 @@ function load(){
     if(/^Hold the Vision, Trust the Process$/i.test(t)||t==="与日计划页一致"){
       el.remove(); __migrated=true;
     }
+  });
+  /* 读书进度：老存档里的「点击刻度」提示 → 一键归零按钮（2026-10-22 加） */
+  $$(".lbl .hint",book).forEach(el=>{
+    if(el.textContent.replace(/\s+/g," ").trim()!=="点击刻度") return;
+    const b=document.createElement("button");
+    b.type="button"; b.className="prog-reset"; b.dataset.progreset="1"; b.textContent="一键归零";
+    el.replaceWith(b); __migrated=true;
   });
   $$('.page[data-tpl="daily"] .sync-note,.page[data-tpl="timer"] .sync-note',book)
     .forEach(el=>{ el.remove(); __migrated=true; });
@@ -8692,6 +8748,7 @@ document.addEventListener("click",function(e){
       return;
     }
     menu.remove();
+    dnMarkRows();                              /* 菜单收起 → 每日记录行重算 ⊕ */
     if(kind==="strike"){
       /* 删除线不是类型：施加到选中的文字（没有选中就整条），不新增条目 */
       const r=applyStrike();
@@ -8727,6 +8784,7 @@ document.addEventListener("click",function(e){
     yplEnsureIds(items.closest(".page")||book);
     const ce=$(".yp-txt",items.lastElementChild); if(ce) ce.focus();
     renumberOL(items);
+    dnMarkRows();                              /* 新增完成 → 该行的 ⊕ 退出（2026-10-22） */
     const dgp=items.closest('.page[data-tpl="daygrid"]'); if(dgp) dgFit(dgp);
     save(); return;
   }
@@ -8874,10 +8932,15 @@ document.addEventListener("click",function(e){
       if(yplRead(w).some(r=>r.id===id)) users.push(w);
     });
     const doDel=()=>{
-      it.remove(); renumberOL(items);
+      /* 每日记录的条目直接挂在 .dn-body 里，没有 .yp-items 祖先 → items 可能是 null，
+         原来这里 item.closest 会抛错，连带 save() 都跑不到（删完 ⊕ 不回来）。2026-10-22 修 */
+      const host=items||it.parentElement;
+      it.remove(); if(items) renumberOL(items);
+      /* 每日记录：这一行删空后 ⊕ 要立刻回来（否则要等重进页面才出现） */
+      dnMarkRows();
       /* 引用它的周计划条目标成「已删除」，不静默消失 */
       users.forEach(w=>{ yplPaint(w); });
-      const dgp=items.closest('.page[data-tpl="daygrid"]'); if(dgp) dgFit(dgp);
+      const dgp=host&&host.closest('.page[data-tpl="daygrid"]'); if(dgp) dgFit(dgp);
       save();
     };
     if(users.length){
@@ -8959,7 +9022,10 @@ document.addEventListener("click",function(e){
     const dday=dnp.closest(".dn-day"), dpg=dnp.closest('[data-tpl="daynote"]');
     if(dday && dpg){
       const body=$(".dn-body",dday);
-      if(body && !$(".yp-item",body)) openAddMenu(body,"task,ul,ol,plain,strike");
+      if(body && !$(".yp-item",body)){
+        openAddMenu(body,"task,ul,ol,plain,strike");
+        dnMarkRows();                        /* ⊕ 让位给菜单（再点一次收起 → 又回来） */
+      }
     }
     return;
   }
@@ -9053,6 +9119,19 @@ document.addEventListener("click",function(e){
   /* 阅读进度 */
   const pg=t.closest("[data-p]");
   if(pg){ const g=pg.parentElement; $$(".p",g).forEach(s=>s.classList.toggle("on",parseInt(s.dataset.p,10)<=parseInt(pg.dataset.p,10))); save(); return; }
+
+  /* 阅读进度：一键归零（清空 10 格 → 0%），先进撤回栈防止误点 */
+  const prs=t.closest("[data-progreset]");
+  if(prs){
+    const sect=prs.closest(".sect"), g=sect&&$(".prog",sect);
+    if(g){
+      if(!$$(".p.on",g).length){ toast("进度已经是 0%"); return; }
+      pushUndo();
+      $$(".p",g).forEach(s=>s.classList.remove("on"));
+      save(); updateUndoBtn(); toast("进度已归零");
+    }
+    return;
+  }
 
   /* 版本 pill */
   const pl=t.closest("[data-kind]");
@@ -9431,13 +9510,14 @@ function caretToStart(el){
   if(first) r.setStart(first,0); else r.selectNodeContents(el);
   r.collapse(true); s.removeAllRanges(); s.addRange(r);
 }
-/* 年计划 / 周计划的条目列表：允许一路删到空（删空后就是「从没加过条目」的样子） */
+/* 年计划 / 周计划的条目列表：允许一路删到空（删空后就是「从没加过条目」的样子）
+   每日记录同理：一天只有一条，删空就回到「只有 ⊕」的初始样子（2026-10-22 加） */
 function isYPList(el){
-  const items=el.closest(".yp-items");
+  const items=el.closest(".yp-items")||el.closest(".dn-body");
   if(!items) return false;
   const pg=items.closest(".page");
   const tpl=pg&&pg.dataset.tpl;
-  return tpl==="yearly"||tpl==="weekly";
+  return tpl==="yearly"||tpl==="weekly"||tpl==="daynote";
 }
 /* 空内容按退格 → 删掉整行，光标退回上一行文字末尾
    allowEmpty=true（年计划 / 周计划）时，第一行也能删；删光了列表就回到初始样式 */
@@ -9534,17 +9614,18 @@ document.addEventListener("keydown",function(e){
   }
 
   /* ① 空内容 + 退格 → 删除该行，光标落到上一行最后一个字后面
-     年计划 / 周计划里第一行也能删；删光了就回到「从没加过条目」的样子 */
+     年计划 / 周计划里第一行也能删；删光了就回到「从没加过条目」的样子。
+     每日记录只剩一条时按退格＝把这一行恢复成只有 ⊕ 的初始状态（2026-10-22） */
   if(e.key==="Backspace"&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){
     if(isEmptyRow(t)){
-      if(deleteEmptyRow(t,isYPList(t))){ e.preventDefault(); save(); return; }
+      if(deleteEmptyRow(t,isYPList(t))){ e.preventDefault(); dnMarkRows(); save(); return; }
     }
     return;
   }
   /* ①b 空内容 + 删除键（向后删）→ 同上，光标落到下一行开头 */
   if(e.key==="Delete"&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){
     if(isYPList(t)&&isEmptyRow(t)){
-      if(deleteRowForward(t)){ e.preventDefault(); save(); return; }
+      if(deleteRowForward(t)){ e.preventDefault(); dnMarkRows(); save(); return; }
     }
     return;
   }
@@ -9650,7 +9731,11 @@ function refreshWeight(page){
       s+=`<path d="${d}" fill="none" stroke="#1f1f1f" stroke-width="1.6" stroke-linejoin="round"/>`;
       pts.forEach((p,i)=>{ s+=`<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="2" fill="#1f1f1f"/>`; });
       const lastp=pts[pts.length-1];
-      s+=`<text x="${X(lastp[0]).toFixed(1)}" y="${(Y(lastp[1])-6).toFixed(1)}" font-size="9" fill="#1f1f1f" text-anchor="end">${lastp[1]}</text>`;
+      /* 末点数值标签：贴在点的上方。默认右对齐到点的左边（点靠近右端时不会出框）；
+         但只有 1 个数据点时点在 x=8，右对齐会把数字推出左边框被裁掉 ——
+         这时改成左对齐、放到点的右侧。 */
+      const lx=X(lastp[0]), ly=Y(lastp[1])-6, startSide=lx<36;
+      s+=`<text x="${(startSide?lx+4:lx).toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="#1f1f1f" text-anchor="${startSide?"start":"end"}">${lastp[1]}</text>`;
       s+=`<text x="10" y="16" font-size="8" fill="#aaa">${mx.toFixed(1)}</text>`;
       s+=`<text x="10" y="120" font-size="8" fill="#aaa">${mn.toFixed(1)}</text>`;
     }else{
