@@ -9621,8 +9621,11 @@ document.addEventListener("keydown",function(e){
 
   /* ① 空内容 + 退格 → 删除该行，光标落到上一行最后一个字后面
      年计划 / 周计划里第一行也能删；删光了就回到「从没加过条目」的样子。
-     每日记录只剩一条时按退格＝把这一行恢复成只有 ⊕ 的初始状态（2026-10-22） */
+     每日记录只剩一条时按退格＝把这一行恢复成只有 ⊕ 的初始状态（2026-10-22）。
+     ⚠️ 饮食日记的 B / L / D / 饮料 是页面固定的模板行（.fj-row），
+        退格只删里面的文字，绝不删整行（2026-10-23）。 */
   if(e.key==="Backspace"&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){
+    if(t.closest(".fj-row")) return;
     if(isEmptyRow(t)){
       if(deleteEmptyRow(t,isYPList(t))){ e.preventDefault(); dnMarkRows(); save(); return; }
     }
@@ -9630,6 +9633,7 @@ document.addEventListener("keydown",function(e){
   }
   /* ①b 空内容 + 删除键（向后删）→ 同上，光标落到下一行开头 */
   if(e.key==="Delete"&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){
+    if(t.closest(".fj-row")) return;
     if(isYPList(t)&&isEmptyRow(t)){
       if(deleteRowForward(t)){ e.preventDefault(); dnMarkRows(); save(); return; }
     }
