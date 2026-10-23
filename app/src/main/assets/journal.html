@@ -10159,15 +10159,14 @@ function tplSortMove(e){
 function tplSortEnd(){
   const st=TS_DRAG; if(!st) return;
   clearTimeout(st.timer);
-  const active=st.active, drop=st.drop, card=st.card, renaming=st.rename;
+  const active=st.active, drop=st.drop, card=st.card;
   tplSortCancel();
-  /* 改名长按：已进入编辑，别把这下松手当点击插入 */
-  if(renaming){
-    TS_JUST_DRAGGED=true;
-    setTimeout(()=>{ TS_JUST_DRAGGED=false; },800);
-    return;
-  }
-  if(!active) return;                     /* 没长按成功 → 交给 click 正常插入 */
+  /* ⚠️ 这里原来还有一段「只要按在标题上就 TS_JUST_DRAGGED=true」的分支：
+     标题是卡片最容易被点中的地方，结果每次点标题都被当成「刚拖完」，
+     click 被吞掉 800ms（连点还会不断续期）→ 表现为「点一下没反应、要点很多下」。
+     真正的长按改名在 tplRenameStart 里已经自己设过这个标记（并把 TS_DRAG 置空，
+     根本走不到这里），所以这里只处理「没长按成功 → 交给 click 正常插入」。 */
+  if(!active) return;
   TS_JUST_DRAGGED=true;
   setTimeout(()=>{ TS_JUST_DRAGGED=false; },320);
   if(drop){
@@ -10219,6 +10218,11 @@ function tplRenameStart(card,k){
 document.addEventListener("pointerdown",tplSortStart);
 document.addEventListener("pointermove",tplSortMove);
 document.addEventListener("pointerup",tplSortEnd);
+/* 手机滚动 / 手势会被系统打断成 pointercancel（没有 pointerup）：
+   不接住的话 450ms 长按计时器照样点火 → 莫名其妙进入排序态，下一次点卡片只用来退出。
+   滚动同理（WebView 里 cancel 不一定来）。2026-10-23 加 */
+document.addEventListener("pointercancel",function(){ if(TS_DRAG) tplSortCancel(); });
+document.addEventListener("scroll",function(){ if(TS_DRAG && !TS_DRAG.active) tplSortCancel(); },true);
 document.addEventListener("pointercancel",tplSortCancel);
 document.addEventListener("touchmove",function(e){
   if(TS_DRAG&&TS_DRAG.active&&e.cancelable) e.preventDefault();
