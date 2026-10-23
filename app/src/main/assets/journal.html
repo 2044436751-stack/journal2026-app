@@ -1316,6 +1316,10 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .lined.l6{min-height:192px}
 .lined.l8{min-height:256px}
 
+/* 空白尾页（always last）：横线铺满整页，看起来就是一整页可写的纸，
+   而不是「半页横线 + 一大片空白」 */
+.page[data-tail] .lined{min-height:calc(100vh - 190px);min-height:calc(100dvh - 190px)}
+
 /* ============ 体重 ============ */
 .wt-top{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-bottom:10px}
 .wt-f{display:flex;align-items:baseline;gap:5px;border-bottom:1px solid var(--line);padding-bottom:2px}
@@ -3771,13 +3775,16 @@ function ixData(){
   });
   return out;
 }
-/* 平铺版：按页面实际顺序，不分组（抽屉与索引页共用） */
+/* 平铺版：按页面实际顺序，不分组（抽屉与索引页共用）
+   ⚠️ 空白尾页不进目录：它是常驻的滚动余量，不是一个「内容页」，
+      进了目录反而每本书尾巴都挂一条空记录。 */
 function ixFlat(){
   const pages=$$(".page",book);
   const idx=pages.find(p=>p.dataset.tpl==="index");
   const out=[];
   pages.forEach((pg,i)=>{
     if(pg===idx) return;
+    if(pg.dataset.tail) return;
     const t=pg.dataset.tpl||"blank";
     out.push({pg:pg, no:i+1, tpl:t, meta:tplMeta(t)});
   });
@@ -6111,7 +6118,7 @@ function wkPageFor(){
     const d=document.createElement("div");
     d.innerHTML=T.weekly();
     pg=d.firstElementChild;
-    book.appendChild(pg);
+    bookAddPage(pg);
     renumber();
   }
   return pg;
@@ -7826,6 +7833,18 @@ T.dotgrid = ()=>`
   <div class="dots" contenteditable="true" data-ph=""></div>
 </div>`;
 
+/* ---------- 空白尾页（永远钉在最后一页） ----------
+   手机键盘弹出时，最后那一页的最下面会顶到屏幕底、没有余量可滚。
+   在文档末尾常驻一张空白页，等于给全书留了一整屏的滚动余量：
+   正文最后一行随时能被滚到键盘上方，这一页本身也能随手写。
+   —— 不进索引 / 抽屉、不编号、没有删除按钮（删了下次 renumber 还会补回来）。 */
+T.tail = ()=>`
+<div class="page" data-label="Notes" data-tpl="blank" data-tail="1">
+  <h2 class="p-title" contenteditable="true" data-ph="标题"></h2>
+  <div class="rule"></div>
+  <div class="lined l8" contenteditable="true" data-ph=""></div>
+</div>`;
+
 /* ==========================================================
    模板清单（插入面板 + 索引归类）
    group 用于索引页归类排序
@@ -8228,8 +8247,49 @@ function delPageYield(){
 window.addEventListener("scroll",delPageYield,{passive:true});
 window.addEventListener("resize",delPageYield);
 
+/* ---------- 空白尾页：保证存在、且永远在最后 ----------
+   返回 true 表示结构有变化（新建 / 移位 / 清掉多余副本），调用方可据此触发一次保存。 */
+function ensureTail(){
+  if(!book) return false;
+  let changed=false;
+  const tails=$$(".page[data-tail]",book);
+  const tail=tails[0]||null;
+  tails.slice(1).forEach(t=>{ t.remove(); changed=true; });   /* 老存档里若有多份，只留一份 */
+  let el=tail;
+  if(!el){
+    const tmp=document.createElement("div");
+    tmp.innerHTML=T.tail();
+    el=tmp.firstElementChild;
+    changed=true;
+  }
+  const pages=$$(".page",book);
+  if(!pages.length || pages[pages.length-1]!==el){
+    book.appendChild(el);            /* appendChild 会把已有的元素搬到最后 */
+    changed=true;
+  }
+  return changed;
+}
+
+/* 往书里加一页：永远插在空白尾页**之前**。
+   直接 appendChild 会先落在尾页后面，renumber 再把尾页搬回来 →
+   新页面瞬间上移一整屏（视觉上跳一下）。 */
+function bookAddPage(page){
+  if(!book) return page;
+  const tail=$(".page[data-tail]",book);
+  if(tail) book.insertBefore(page, tail);
+  else book.appendChild(page);
+  return page;
+}
+
 function renumber(){
+  ensureTail();                      /* 尾页先就位，下面按页面顺序编号才不会错位 */
   $$(".page",book).forEach((p,i)=>{
+    /* 空白尾页：不编号、不给删除按钮，也不做各种页面初始化 */
+    if(p.dataset.tail){
+      const n=$(".page-num",p); if(n) n.remove();
+      const d=$(".del-page",p); if(d) d.remove();
+      return;
+    }
     let n=$(".page-num",p);
     if(!n){ n=document.createElement("div"); n.className="page-num"; p.appendChild(n); }
     n.textContent=(i+1);
@@ -8352,6 +8412,7 @@ function load(){
   if(migrateDaynoteTitle(book)) __migrated=true;   /* 老存档：每日记录的标题 div → h1（拿回 22px/600/红） */
   if(migrateDateShow(book)) __migrated=true;       /* 老存档：日期字段补自定义选择器的显示层 */
   if(migrateYearcal(book)) __migrated=true;        /* 老存档：年度日历页头换成统一切片器 */
+  if(ensureTail()) __migrated=true;                /* 尾页：没有就补一张，或在别处就搬回最后 */
   renumber();
   /* 日计划页标题：Today's Focus on → Today's List（大小写照原文显示） */
   $$('.page[data-tpl="daily"] .p-title',book).forEach(el=>{
@@ -8494,7 +8555,7 @@ function insert(key){
   wrap.innerHTML=html;
   const page=wrap.firstElementChild;
   if(TPL_CUSTOM[key]) hydrateTpl(page);
-  book.appendChild(page);
+  bookAddPage(page);                 /* 插在空白尾页之前，尾页永远在最后 */
   page.scrollIntoView({behavior:"smooth",block:"start"});
   renumber();
   renumberOL(page);   /* 新页面的周计划列表立刻挂上占位 ＋（月任务步骤格不用） */
@@ -10517,8 +10578,9 @@ function visBounds(){
   /* ⚠️ 安卓 15 是强制 edge-to-edge 的：键盘直接盖在 WebView 上，
      窗口和 visualViewport 都不缩 → 量不到键盘高度（kbHeight()=0）。
      这时按经验值把「可见下边界」抬起来，否则最后一页最下面永远算作「可见」，
-     既不会被顶上来、也没有多余高度可滚（用户看到的就是「挡住 + 划不动」）。 */
-  if(activeEdit && !kbHeight()){
+     既不会被顶上来、也没有多余高度可滚（用户看到的就是「挡住 + 划不动」）。
+     判断用 editFocus（任何正在打字的格子），不只是参与避让的 activeEdit。 */
+  if(editFocus && !kbHeight()){
     bottom=Math.min(bottom, window.innerHeight-kbFallback());
   }
   return {top, bottom};
@@ -10649,9 +10711,13 @@ document.addEventListener("focusin",function(e){
      也得让文档能滚 —— 否则最后一页最下面被键盘挡住时「划不动」。 */
   editFocus=t;
   updateKbdBar();
-  /* 日历格 / 时间表格子例外：格子很矮（29px），键盘避让滚动会让点击目标错位
-     （横向滚动容器里更明显——时间表文字现在是横向滑动的），这里不做 */
-  if(t.closest&&(t.closest(".cg-cell")||t.closest(".tt-r")||t.closest(".tt2 .tt-c"))) return;
+  /* 日历格 / 时间表格子例外：格子很矮（29px），**强制居中**的滚动会让点击目标错位
+     （横向滚动容器里更明显——时间表文字现在是横向滑动的），所以不做强制居中。
+     但「被键盘挡住」时还是要往上滚一次，否则点了最后一格只能盯着键盘发呆。 */
+  if(t.closest&&(t.closest(".cg-cell")||t.closest(".tt-r")||t.closest(".tt2 .tt-c"))){
+    [0,140,320].forEach(ms=>setTimeout(()=>{ if(editFocus===t) ensureVisible(t,false); },ms));
+    return;
+  }
   /* 键盘弹出有延迟，多次补滚确保到位（补滚不强制重新居中，只在被挡住时滚） */
   handleEditFocus(t);
   requestAnimationFrame(()=>handleEditFocus(t,false));
