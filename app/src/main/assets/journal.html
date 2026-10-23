@@ -2006,23 +2006,13 @@ body.tpledit #tplarea .tpl-x:hover{color:#c0392b}
 #dlg .dact .dok{background:var(--ink);border-color:var(--ink);color:#fff}
 #dlg .dact .dok.danger{background:#c0392b;border-color:#c0392b;color:#fff}
 
-/* ============ 键盘上方编辑工具条 ============ */
-#kbdbar{
-  position:fixed;left:0;right:0;bottom:0;z-index:95;
-  display:none;gap:6px;justify-content:flex-end;align-items:center;
-  padding:5px 10px;background:#f2f2f0;border-top:1px solid var(--line);
-}
-#kbdbar.on{display:flex}
-#kbdbar button{
-  font-family:inherit;font-size:15px;line-height:1;
-  border:1px solid var(--line);background:#fff;border-radius:12px;
-  padding:6px 12px;color:var(--ink);cursor:pointer;
-}
-#kbdbar button[data-kbd="done"]{background:var(--ink);border-color:var(--ink);color:#fff}
-#kbdbar button:active{opacity:.7}
+/* ============ 键盘上方编辑工具条 ============
+   2026-10-23 按用户要求整条去掉（原本是「完成 / ＋任务」两个按钮）。
+   键盘弹出时只保留「底部留白 + 光标避让」，不再有任何悬浮条。 */
+
 @media print{
   body{background:#fff;padding:0}
-  #fab,#idxbtn,#drawer,#dwm,#sheet,#mask,#top,#toast,#kbdbar,#dlg,#tplbar{display:none!important}
+  #fab,#idxbtn,#drawer,#dwm,#sheet,#mask,#top,#toast,#dlg,#tplbar{display:none!important}
   .page{box-shadow:none;border:none;page-break-after:always;border-radius:0;margin:0}
   .del-page{display:none!important}
 }
@@ -2088,7 +2078,6 @@ body.tpledit #tplarea .tpl-x:hover{color:#c0392b}
   <button type="button" id="trestore" data-page-node-id="4bbhKervFhalAOmn0kN2lT"></button>
 </div>
 <div id="toast" data-page-node-id="Z9HdidXABZM1c4FSdIULrr"></div>
-<div id="kbdbar" data-page-node-id="tYTIFBTAixWFQVs1LPabds"></div>
 
 <div id="dlg" data-page-node-id="Vap5UoWkaMuY773XzX2Xwi">
   <div class="dbox" role="alertdialog" aria-modal="true" aria-labelledby="dlg-ttl" data-page-node-id="au4qN61yz4XKp2khtTmz8e">
@@ -10658,55 +10647,38 @@ function kbHeight(){
   return h>60?h:0;
 }
 
-/* 编辑工具条：贴在键盘上沿，含「完成」与「＋下一项」
-   同时给文档底部临时加高，保证最末尾的条目也能被滚上来 */
+/* 键盘留白：编辑时给文档底部临时加高，保证最末尾的条目也能被滚上来。
+   （原来的「完成 / ＋任务」悬浮条已按用户要求整条删除，这里只管留白。） */
 function updateKbdBar(){
-  const bar=$("#kbdbar");
   /* 焦点自愈：focusout 并不总是会来（窗口失焦、程序化 blur、节点被换掉……），
-     那样 activeEdit / editFocus 会一直是旧值 —— 表现成「已经不打字了，底部留白 / 工具条还在」。
-     这里按「当前真正的 activeElement」校一次（工具条自己的按钮除外）。 */
+     那样 activeEdit / editFocus 会一直是旧值 —— 表现成「已经不打字了，底部留白还在」。 */
   const ae=document.activeElement;
-  if(!(ae && ae.closest && ae.closest("#kbdbar"))){
-    const away=el=>!!el && ae!==el && !(el.contains && ae && el.contains(ae));
-    if(activeEdit && away(activeEdit)) activeEdit=null;
-    if(editFocus && away(editFocus)) editFocus=null;
-  }
+  const away=el=>!!el && ae!==el && !(el.contains && ae && el.contains(ae));
+  if(activeEdit && away(activeEdit)) activeEdit=null;
+  if(editFocus && away(editFocus)) editFocus=null;
   const kb=kbHeight();
   /* 只要在编辑，就必须给文档留出「一个键盘高」的滚动余量：
      量得到键盘就按实测值，量不到（安卓 15 edge-to-edge 把 IME 直接盖在 WebView 上）就按经验值。
      否则最后一页的最后几行永远顶不上来 —— 文档已经到底，没东西可滚。 */
   const lift=editFocus? (kb||kbFallback()) : 0;
-  if(book){
-    const cur=parseFloat(book.style.paddingBottom)||0;
-    const want=lift?(lift+40):0;
-    if(want!==cur){
-      const maxAfter=document.documentElement.scrollHeight-cur-window.innerHeight;
-      if(want===0 && window.scrollY>maxAfter+2){
-        /* 人正贴着最底部：这时去掉留白会被浏览器「夹」回去 → 页面跳一下。
-           先留着，等用户滚上来一点再清（见下面 window scroll 里的处理）。 */
-        book.dataset.padHold="1";
-      }else{
-        const y=window.scrollY;
-        book.style.paddingBottom=want?want+"px":"";
-        delete book.dataset.padHold;
-        requestAnimationFrame(()=>{ if(Math.abs(window.scrollY-y)>1) window.scrollTo(0,y); });
-      }
-    }
+  if(!book) return;
+  const cur=parseFloat(book.style.paddingBottom)||0;
+  const want=lift?(lift+40):0;
+  if(want===cur) return;
+  const maxAfter=document.documentElement.scrollHeight-cur-window.innerHeight;
+  if(want===0 && window.scrollY>maxAfter+2){
+    /* 人正贴着最底部：这时去掉留白会被浏览器「夹」回去 → 页面跳一下。
+       先留着，等用户滚上来一点再清（见下面 window scroll 里的处理）。 */
+    book.dataset.padHold="1";
+  }else{
+    const y=window.scrollY;
+    book.style.paddingBottom=want?want+"px":"";
+    delete book.dataset.padHold;
+    requestAnimationFrame(()=>{ if(Math.abs(window.scrollY-y)>1) window.scrollTo(0,y); });
   }
-  if(!bar) return;
-  if(!activeEdit){ bar.classList.remove("on"); return; }
-  const yi=activeEdit.closest(".yp-item");
-  let html='<button data-kbd="done">完成</button>';
-  if(yi){
-    const kind=KIND_NAME[yi.classList.contains("task")?"task":(yi.classList.contains("ol")?"ol":(yi.classList.contains("del")?"del":"ul"))];
-    html+='<button data-kbd="next">＋ '+kind+'</button>';
-  }
-  bar.innerHTML=html;
-  bar.style.bottom=lift+"px";
-  bar.classList.add("on");
 }
 
-/* 聚焦后的完整处理：加高 → 出工具条 → 滚动
+/* 聚焦后的完整处理：加高 → 滚动
    force=true 只在「第一次聚焦」用：把输入框放到可视区约 42% 处。
    后续补滚（键盘弹出动画 / 尺寸变化）一律非强制 —— 只在真的被挡住时才滚，
    否则键盘一收起、可视区变高，就会把输入框重新拉上去，表现成「打完字页面往上滑一下」。 */
@@ -10716,7 +10688,9 @@ function handleEditFocus(t,force){
   ensureVisible(t,(force!==false) && caretRestore===0);
 }
 
-/* 新增同类型项（供工具条调用）：插到当前条目正下方 */
+/* 新增同类型项：插到当前条目正下方
+   （原来是编辑工具条的「＋类型」按钮在用；工具条删掉后暂时没有入口，
+    逻辑留着，需要时挂到别的手势上即可） */
 function addSibling(el){
   const yi=el.closest(".yp-item");
   if(yi){
@@ -10822,18 +10796,7 @@ window.addEventListener("resize",()=>{
   $$('.page[data-tpl="daygrid"]',book).forEach(dgFit);
 });
 
-/* 工具条按钮 */
-document.addEventListener("click",function(e){
-  const kb=e.target.closest("[data-kbd]");
-  if(!kb) return;
-  const act=kb.dataset.kbd;
-  if(act==="done"){
-    if(activeEdit) activeEdit.blur();
-    else { const a=document.activeElement; if(a&&a.blur) a.blur(); }
-    activeEdit=null; updateKbdBar(); save(); return;
-  }
-  if(act==="next"&&activeEdit){ addSibling(activeEdit); return; }
-});
+/* 编辑工具条已删除（2026-10-23）：不再有「完成 / ＋任务」两个按钮 */
 
 /* Esc 关闭年计划条目详情页 / 安排到时间表面板 / 计时弹窗（计时不停） */
 document.addEventListener("keydown",function(e){
