@@ -6206,7 +6206,19 @@ function dailyNote(pg,list){
    不带参数＝广播给所有镜像页（save 兜底那两个地方用）。 */
 function dailyRefresh(pg){
   if(window.__tdHolding) return;          /* 长按进行中：DOM 冻结，别把按着的那行换掉 */
-  if(!pg){ $$('.page[data-tpl="daily"],.page[data-tpl="timer"]',book).forEach(dailyRefresh); return; }
+  if(!pg){
+    $$('.page[data-tpl="daily"],.page[data-tpl="timer"]',book).forEach(p=>{
+      const list=$(".grow-list",p);
+      const ae=document.activeElement;
+      /* ⚠️ 正在这一页的 Todo 里打字：**绝不重建**。
+         每打一个字真源就变了 → 签名变 → 把镜像整段重画 → 正在输入的那个节点被换掉，
+         安卓的 IME 会因此重算光标位置、把视口滚走（真机上表现成「打完字跳到别的页面」）。
+         文字本来就已经在镜子里了（用户刚敲进去的），根本不需要重建。 */
+      if(list && ae && ae!==document.body && list.contains(ae)) return;
+      dailyRefresh(p);
+    });
+    return;
+  }
   const list=$(".grow-list",pg); if(!list) return;
   const cell=dailyCell(pg);
   const items=cell?($(".yp-items",cell)||cell):null;
@@ -6241,7 +6253,13 @@ function dailyRefresh(pg){
     const rows=$$(".yp-item",list);
     const r=rows[keep.i]||rows[rows.length-1];
     const ce=r&&$(".yp-txt",r);
+    /* 重画会把正在输入的那个节点换成新的：万一 IME 因此把视口甩走，
+       这里把它钉回原处（只在这种「大幅跳动」时纠正，正常的避让滚动不拦）。 */
+    const sy=window.scrollY;
     if(ce && keep.off!=null) setCaretOffset(ce,keep.off);
+    requestAnimationFrame(()=>{
+      if(Math.abs(window.scrollY-sy)>200) window.scrollTo(0,sy);
+    });
   }
   dailyNote(pg,list);
   ttRefresh(pg);
@@ -9719,10 +9737,17 @@ document.addEventListener("input",function(e){
   if(dmt){
     const row=dmt.closest(".yp-item"), src=dailySrc(row);
     if(src){
+      /* 打字就只是打字：写回真源（周计划在页面上方，可能因此改高度）、保存，
+         然后**把视口钉在原地** —— 真机和电脑的滚动锚定行为不一样，
+         一旦锚点选错就会整页跳走（用户会看到「打完字跳到周计划那一格」）。 */
+      const sy=window.scrollY;
       const st=$(".yp-txt",src);
       if(st && st.innerHTML!==dmt.innerHTML) st.innerHTML=dmt.innerHTML;
       ttSyncName(dmt);
-      save();                    /* save() 里的兜底刷新会把光标原样还回来 */
+      save();
+      const pin=()=>{ if(Math.abs(window.scrollY-sy)>120) window.scrollTo(0,sy); };
+      requestAnimationFrame(()=>{ pin(); requestAnimationFrame(pin); });
+      setTimeout(pin,160);
       return;
     }
   }
@@ -10618,6 +10643,15 @@ function kbHeight(){
    同时给文档底部临时加高，保证最末尾的条目也能被滚上来 */
 function updateKbdBar(){
   const bar=$("#kbdbar");
+  /* 焦点自愈：focusout 并不总是会来（窗口失焦、程序化 blur、节点被换掉……），
+     那样 activeEdit / editFocus 会一直是旧值 —— 表现成「已经不打字了，底部留白 / 工具条还在」。
+     这里按「当前真正的 activeElement」校一次（工具条自己的按钮除外）。 */
+  const ae=document.activeElement;
+  if(!(ae && ae.closest && ae.closest("#kbdbar"))){
+    const away=el=>!!el && ae!==el && !(el.contains && ae && el.contains(ae));
+    if(activeEdit && away(activeEdit)) activeEdit=null;
+    if(editFocus && away(editFocus)) editFocus=null;
+  }
   const kb=kbHeight();
   /* 只要在编辑，就必须给文档留出「一个键盘高」的滚动余量：
      量得到键盘就按实测值，量不到（安卓 15 edge-to-edge 把 IME 直接盖在 WebView 上）就按经验值。
