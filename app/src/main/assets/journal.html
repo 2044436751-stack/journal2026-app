@@ -10489,12 +10489,39 @@ document.addEventListener("touchmove",function(e){
    —— 聚焦编辑项时，把它滚到键盘上方；键盘弹出/收起时持续跟随
 ========================================================== */
 let activeEdit=null;
+/* 当前聚焦的可编辑元素（含「不做避让」的那几种：时间格 / 日历格）。
+   留白只看它 —— 只要在打字，文档就必须留出一个键盘高度的滚动余量；
+   避让（自动上顶 + 工具条）仍只看 activeEdit。 */
+let editFocus=null;
+
+/* 记录见过的最大视口高度：键盘弹出时窗口会变矮，用它当基准才能算出差值 */
+let INNER_MAX=(window.innerHeight||0);
+window.addEventListener("resize",()=>{
+  if((window.innerHeight||0)>INNER_MAX) INNER_MAX=window.innerHeight;
+},{passive:true});
+
+/* 键盘测不到时的「经验预留高度」：编辑态默认按这个抬升可视下边界。
+   只在 window 和 visualViewport 都没缩的时候才用（见 kbHeight）。
+   取视口的 50%（常见输入法含候选栏约 300–380 CSS px），夹在 280–460 之间；
+   宁可多留一点白，也不能少留 —— 少了就是「最后一页最下面被挡住、还滚不动」。 */
+function kbFallback(){
+  const h=window.innerHeight||600;
+  return Math.round(Math.min(460, Math.max(280, h*0.5)));
+}
 
 /* 可视区（排除键盘）的上下边界，单位：client 坐标 */
 function visBounds(){
   const vv=window.visualViewport;
-  if(vv) return {top:vv.offsetTop, bottom:vv.offsetTop+vv.height};
-  return {top:0, bottom:window.innerHeight};
+  let top=0, bottom=window.innerHeight;
+  if(vv){ top=vv.offsetTop; bottom=vv.offsetTop+vv.height; }
+  /* ⚠️ 安卓 15 是强制 edge-to-edge 的：键盘直接盖在 WebView 上，
+     窗口和 visualViewport 都不缩 → 量不到键盘高度（kbHeight()=0）。
+     这时按经验值把「可见下边界」抬起来，否则最后一页最下面永远算作「可见」，
+     既不会被顶上来、也没有多余高度可滚（用户看到的就是「挡住 + 划不动」）。 */
+  if(activeEdit && !kbHeight()){
+    bottom=Math.min(bottom, window.innerHeight-kbFallback());
+  }
+  return {top, bottom};
 }
 
 /* 把元素滚进可视区，并尽量停在可视区上 40% 处，方便看到上文（如月份标题） */
@@ -10512,11 +10539,16 @@ function ensureVisible(el,force){
   if(Math.abs(delta)>2) window.scrollBy({top:delta,behavior:"auto"});
 }
 
-/* 键盘高度（px），未弹出时为 0 */
+/* 键盘高度（px），未弹出 / 测不到时为 0
+   两种「键盘占了地方」的表现都要认：
+   ① visualViewport 缩水（IME 覆盖在窗口上）→ innerHeight - (offsetTop+height)
+   ② 窗口本身被压矮（WebView 把键盘算成 resize）→ INNER_MAX - innerHeight
+   两者都取最大值，哪种生效都能量到。 */
 function kbHeight(){
   const vv=window.visualViewport;
-  if(!vv) return 0;
-  const h=window.innerHeight-(vv.offsetTop+vv.height);
+  const cover=vv? (window.innerHeight-(vv.offsetTop+vv.height)) : 0;
+  const shrink=INNER_MAX-(window.innerHeight||0);
+  const h=Math.max(cover, shrink);
   return h>60?h:0;
 }
 
@@ -10525,9 +10557,13 @@ function kbHeight(){
 function updateKbdBar(){
   const bar=$("#kbdbar");
   const kb=kbHeight();
+  /* 只要在编辑，就必须给文档留出「一个键盘高」的滚动余量：
+     量得到键盘就按实测值，量不到（安卓 15 edge-to-edge 把 IME 直接盖在 WebView 上）就按经验值。
+     否则最后一页的最后几行永远顶不上来 —— 文档已经到底，没东西可滚。 */
+  const lift=editFocus? (kb||kbFallback()) : 0;
   if(book){
     const cur=parseFloat(book.style.paddingBottom)||0;
-    const want=kb?(kb+40):0;
+    const want=lift?(lift+40):0;
     if(want!==cur){
       const maxAfter=document.documentElement.scrollHeight-cur-window.innerHeight;
       if(want===0 && window.scrollY>maxAfter+2){
@@ -10543,7 +10579,7 @@ function updateKbdBar(){
     }
   }
   if(!bar) return;
-  if(!activeEdit || kb===0){ bar.classList.remove("on"); return; }
+  if(!activeEdit){ bar.classList.remove("on"); return; }
   const yi=activeEdit.closest(".yp-item");
   let html='<button data-kbd="done">完成</button>';
   if(yi){
@@ -10551,7 +10587,7 @@ function updateKbdBar(){
     html+='<button data-kbd="next">＋ '+kind+'</button>';
   }
   bar.innerHTML=html;
-  bar.style.bottom=kb+"px";
+  bar.style.bottom=lift+"px";
   bar.classList.add("on");
 }
 
@@ -10609,6 +10645,10 @@ function addSibling(el){
 document.addEventListener("focusin",function(e){
   const t=e.target;
   if(!(t.isContentEditable || (t.tagName==="INPUT"&&t.type!=="checkbox"))) return;
+  /* 只要在打字就补底部留白：哪怕这一格不做避让（时间格/日历格），
+     也得让文档能滚 —— 否则最后一页最下面被键盘挡住时「划不动」。 */
+  editFocus=t;
+  updateKbdBar();
   /* 日历格 / 时间表格子例外：格子很矮（29px），键盘避让滚动会让点击目标错位
      （横向滚动容器里更明显——时间表文字现在是横向滑动的），这里不做 */
   if(t.closest&&(t.closest(".cg-cell")||t.closest(".tt-r")||t.closest(".tt2 .tt-c"))) return;
@@ -10621,6 +10661,10 @@ document.addEventListener("focusin",function(e){
 document.addEventListener("focusout",function(e){
   if(activeEdit===e.target){
     activeEdit=null;
+    setTimeout(updateKbdBar,180);
+  }
+  if(editFocus===e.target){
+    editFocus=null;
     setTimeout(updateKbdBar,180);
   }
   /* 时间格里手动写的内容：删光 + 失焦 → 整格还原成空白（不留空勾选框这类残留）。
