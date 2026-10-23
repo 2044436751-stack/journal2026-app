@@ -6157,9 +6157,18 @@ function caretOffsetIn(el){
   return pre.toString().length;
 }
 /* 按「第几个字」把光标放回元素 */
+/* 只是「把光标放回原处」的聚焦（镜像/时间表重建之后）——
+   >0 时 focusin 不再做「首次聚焦」的强制居中，否则每打一个字镜像一重建
+   就会把页面重新拉到 42% 处，表现成「打完字页面往上滑一下」。（2026-10-23） */
+let caretRestore=0;
+function focusQuiet(el){
+  caretRestore++;
+  try{ el.focus({preventScroll:true}); }catch(_){ if(el.focus) el.focus(); }
+  finally{ caretRestore--; }
+}
 function setCaretOffset(el,off){
   if(off==null) return;
-  try{ el.focus({preventScroll:true}); }catch(_){ if(el.focus) el.focus(); }
+  focusQuiet(el);
   const s=window.getSelection(); if(!s) return;
   const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null);
   let n=null, acc=0, done=false;
@@ -9759,7 +9768,7 @@ function hasTextAfter(el){
 /* 把光标移到元素内容末尾：优先落进最后一个文本节点，
    真正停在「最后一个字后面」，而不是容器末尾（后者对中文输入/IME 更稳） */
 function caretToEnd(el){
-  try{ el.focus({preventScroll:true}); }catch(_){ el.focus&&el.focus(); }
+  focusQuiet(el);
   const s=window.getSelection();
   if(!s) return;
   const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null);
@@ -9790,7 +9799,7 @@ function breakLineAtCaret(el){
 }
 /* 光标移到文字开头 */
 function caretToStart(el){
-  try{ el.focus({preventScroll:true}); }catch(_){ el.focus&&el.focus(); }
+  focusQuiet(el);
   const s=window.getSelection(); if(!s) return;
   const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null);
   const first=w.nextNode();
@@ -10516,7 +10525,23 @@ function kbHeight(){
 function updateKbdBar(){
   const bar=$("#kbdbar");
   const kb=kbHeight();
-  if(book) book.style.paddingBottom = kb ? (kb+40)+"px" : "";
+  if(book){
+    const cur=parseFloat(book.style.paddingBottom)||0;
+    const want=kb?(kb+40):0;
+    if(want!==cur){
+      const maxAfter=document.documentElement.scrollHeight-cur-window.innerHeight;
+      if(want===0 && window.scrollY>maxAfter+2){
+        /* 人正贴着最底部：这时去掉留白会被浏览器「夹」回去 → 页面跳一下。
+           先留着，等用户滚上来一点再清（见下面 window scroll 里的处理）。 */
+        book.dataset.padHold="1";
+      }else{
+        const y=window.scrollY;
+        book.style.paddingBottom=want?want+"px":"";
+        delete book.dataset.padHold;
+        requestAnimationFrame(()=>{ if(Math.abs(window.scrollY-y)>1) window.scrollTo(0,y); });
+      }
+    }
+  }
   if(!bar) return;
   if(!activeEdit || kb===0){ bar.classList.remove("on"); return; }
   const yi=activeEdit.closest(".yp-item");
@@ -10530,11 +10555,14 @@ function updateKbdBar(){
   bar.classList.add("on");
 }
 
-/* 聚焦后的完整处理：加高 → 出工具条 → 滚动 */
-function handleEditFocus(t){
+/* 聚焦后的完整处理：加高 → 出工具条 → 滚动
+   force=true 只在「第一次聚焦」用：把输入框放到可视区约 42% 处。
+   后续补滚（键盘弹出动画 / 尺寸变化）一律非强制 —— 只在真的被挡住时才滚，
+   否则键盘一收起、可视区变高，就会把输入框重新拉上去，表现成「打完字页面往上滑一下」。 */
+function handleEditFocus(t,force){
   activeEdit=t;
   updateKbdBar();
-  ensureVisible(t,true);
+  ensureVisible(t,(force!==false) && caretRestore===0);
 }
 
 /* 新增同类型项（供工具条调用）：插到当前条目正下方 */
@@ -10584,10 +10612,10 @@ document.addEventListener("focusin",function(e){
   /* 日历格 / 时间表格子例外：格子很矮（29px），键盘避让滚动会让点击目标错位
      （横向滚动容器里更明显——时间表文字现在是横向滑动的），这里不做 */
   if(t.closest&&(t.closest(".cg-cell")||t.closest(".tt-r")||t.closest(".tt2 .tt-c"))) return;
-  /* 键盘弹出有延迟，多次补滚确保到位 */
+  /* 键盘弹出有延迟，多次补滚确保到位（补滚不强制重新居中，只在被挡住时滚） */
   handleEditFocus(t);
-  requestAnimationFrame(()=>handleEditFocus(t));
-  [100,260,420].forEach(ms=>setTimeout(()=>{ if(activeEdit===t) handleEditFocus(t); },ms));
+  requestAnimationFrame(()=>handleEditFocus(t,false));
+  [100,260,420].forEach(ms=>setTimeout(()=>{ if(activeEdit===t) handleEditFocus(t,false); },ms));
 });
 
 document.addEventListener("focusout",function(e){
@@ -10610,13 +10638,23 @@ document.addEventListener("focusout",function(e){
 
 if(window.visualViewport){
   window.visualViewport.addEventListener("resize",()=>{
-    if(activeEdit) handleEditFocus(activeEdit);
+    /* ⚠️ 只有「键盘还开着」才跟随重滚。键盘收起时可视区变高，
+       若照样 handleEditFocus，会把输入框重新拉到 42% 处 —— 就是「打完字页面往上滑一下」。
+       收起时只更新工具条/底部留白。 */
+    if(activeEdit && kbHeight()>0) handleEditFocus(activeEdit,false);
     else updateKbdBar();
   });
   window.visualViewport.addEventListener("scroll",()=>updateKbdBar());
 }
+/* 贴着底部时被「延迟清理」的键盘留白：等滚上来一点再撤掉（不会跳） */
+window.addEventListener("scroll",()=>{
+  if(!book || !book.dataset.padHold) return;
+  const cur=parseFloat(book.style.paddingBottom)||0;
+  const maxAfter=document.documentElement.scrollHeight-cur-window.innerHeight;
+  if(window.scrollY<=maxAfter+2){ book.style.paddingBottom=""; delete book.dataset.padHold; }
+},{passive:true});
 window.addEventListener("resize",()=>{
-  if(activeEdit) setTimeout(()=>handleEditFocus(activeEdit),80);
+  if(activeEdit && kbHeight()>0) setTimeout(()=>handleEditFocus(activeEdit,false),80);
   /* 一日四格：宽度变了要重新量四格的自然高度，十字线才不会偏心 */
   $$('.page[data-tpl="daygrid"]',book).forEach(dgFit);
 });
