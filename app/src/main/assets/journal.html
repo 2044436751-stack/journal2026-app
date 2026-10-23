@@ -1458,14 +1458,14 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   background:#EAF7F2;border-radius:9px;padding:1px 8px;letter-spacing:.06em;
 }
 /* 顶部一行：日期 · 实时时刻 · 星期圆点（今天高亮） */
-.tb-date{display:flex;align-items:center;gap:7px;margin:7px 0 2px;
-  border-bottom:1px solid var(--line2);padding-bottom:5px}
-.tb-date .tb-d{font-size:13.5px;color:var(--ink);font-variant-numeric:tabular-nums}
-.tb-date .tb-clock{font-size:13.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
-.tb-date .tb-hm{display:flex;gap:3px;margin-left:auto}
-.tb-date .tb-hm span{width:15px;height:15px;border-radius:50%;font-size:11px;line-height:15px;
-  text-align:center;color:var(--ink3)}
-.tb-date .tb-hm span.on{background:var(--ink);color:#fff}
+/* 页头日期行：与日计划 DATE 行同款（DATE 小标 + 日期框 + 右侧星期方块） */
+.tb-date{display:flex;align-items:center;gap:8px;margin:9px 0 6px}
+.tb-date .tb-dlbl{font-size:9.5px;letter-spacing:.1em;color:var(--ink2);flex:0 0 auto}
+.tb-date .dfield{flex:0 1 auto;min-width:0}
+.tb-date .dow{margin:0}
+/* 按日存档：只显示当前那一天的表格 */
+.tb-day{display:none}
+.tb-day.on{display:block}
 /* 两栏头（计划 / 实际用时）＋网格 */
 .tt2-hd{display:grid;grid-template-columns:16px minmax(0,1fr) minmax(0,1fr);
   font-size:12.5px;color:var(--ink3);letter-spacing:.06em;padding:2px 0 4px}
@@ -5010,35 +5010,44 @@ T.daily = ()=>{
 /* ---------- 日计划 · 计时模式（2026-10-15 新增页面模版） ----------
    左栏＝计划（与日计划的时间格同款条目：类型 / 打字 / × 删除）；
    右栏＝实际用时（长按任务开计时，结束落一条记录、画成深绿块）。
-   两栏共用一根时间轴（.tt2 网格），方便「计划 vs 实际」逐行对照。 */
-T.timer = ()=>{
+   两栏共用一根时间轴（.tt2 网格），方便「计划 vs 实际」逐行对照。
+   按日存档（2026-10-23）：头部日期可选，切日期只换 [data-tbwrap] 里的 .tb-day.on；
+   记录仍集中存在页面级的 [data-tbrecwrap] 里 —— 按「起始时间戳落在哪天」过滤，
+   所以换天不会把还在跑的计时弄丢。 */
+function tbTTBody(){
   let rows="";
   for(let h=7;h<=24;h++) rows+=tbRowHTML(h);
+  return `<div class="sect" style="margin-top:10px">`+
+    `<div class="lbl"><span>Timetable</span><span class="hint">长按任务 → 开始计时</span></div>`+
+    `<div class="tt2-hd"><span></span><span>计划</span><span class="r">实际用时</span></div>`+
+    `<div class="tt2" data-tt2="1">`+
+`${rows}`+
+      `<div class="alayer" data-alayer="1"></div>`+
+      `<div class="nowline off" data-nowline="1"><i class="nd"></i><span class="nl"></span></div>`+
+    `</div>`+
+    `<div class="tb-legend">`+
+      `<span><i class="i1"></i>计划的时段</span>`+
+      `<span><i class="i2"></i>实际用时</span>`+
+      `<span><i class="i3"></i>现在</span>`+
+    `</div>`+
+  `</div>`;
+}
+T.timer = ()=>{
+  const iso=tbISO(bjDate());
   return `
-<div class="page" data-label="Timer" data-tpl="timer" data-tbday="">
+<div class="page" data-label="Timer" data-tpl="timer" data-tbday="${iso}">
   <h1 class="p-title">Today's List<span class="tb-chip">计时模式</span></h1>
   <div class="tb-date">
-    <span class="tb-d"></span>
-    <span class="tb-clock"></span>
-    <span class="tb-hm"></span>
+    <span class="tb-dlbl">DATE</span>
+    ${dateField(iso)}
+    <div class="dow auto-dow" style="margin:0;flex:1 1 auto;min-width:0;max-width:152px"></div>
   </div>
   <div class="sect" style="margin-top:8px">
     <div class="lbl"><span>Today's List</span></div>
     <div class="grow-list"></div>
   </div>
-  <div class="sect" style="margin-top:10px">
-    <div class="lbl"><span>Timetable</span><span class="hint">长按任务 → 开始计时</span></div>
-    <div class="tt2-hd"><span></span><span>计划</span><span class="r">实际用时</span></div>
-    <div class="tt2" data-tt2="1">
-${rows}
-      <div class="alayer" data-alayer="1"></div>
-      <div class="nowline off" data-nowline="1"><i class="nd"></i><span class="nl"></span></div>
-    </div>
-    <div class="tb-legend">
-      <span><i class="i1"></i>计划的时段</span>
-      <span><i class="i2"></i>实际用时</span>
-      <span><i class="i3"></i>现在</span>
-    </div>
+  <div class="tb-days" data-tbwrap="1">
+    <div class="tb-day on" data-ymd="${iso}">${tbTTBody()}</div>
   </div>
   <div class="tb-recs" data-tbrecwrap="1"></div>
 </div>`;
@@ -5132,7 +5141,10 @@ function ttRangeText(hrs){
 function ttScope(pg){
   if(!pg||!pg.querySelector) return pg;
   const tw=pg.querySelector("[data-dytw]");
-  return (tw && tw.querySelector(".dy-day.on")) || pg;
+  if(tw) return tw.querySelector(".dy-day.on")||pg;
+  const tb=pg.querySelector("[data-tbwrap]");       /* 计时模式：按日存档 */
+  if(tb) return tb.querySelector(".tb-day.on")||pg;
+  return pg;
 }
 function ttRowOf(pg,h){
   /* 日计划按日存档：只看当前那一天的时间表，别抓到隐藏日区块里的行 */
@@ -5583,15 +5595,35 @@ function tbItemFor(pg,o){
   if(it && (!tbNameOf(it) || (o.n && tbNameOf(it)!==o.n)) && o.n){
     /* 行号那格已经不是原来那条了（被改写/清空）→ 走名字兜底 */
     const hit=(()=>{ let r=null;
-      $$(".tt-c",pg).some(c=>{ const x=$(".tt-it",c);
+      $$(".tt-c",tbScope(pg)).some(c=>{ const x=$(".tt-it",c);
         if(x && tbNameOf(x)===o.n){ r=x; return true; } return false; });
       return r; })();
     it=hit||it;
   }
   return it||null;
 }
-/* ---------- 记录读写（数据在 DOM 里，跟着 innerHTML 存档走） ---------- */
-function tbRecEls(pg){ return $$(".tb-rec[data-tbrec]",pg); }
+/* ---------- 记录读写（数据在 DOM 里，跟着 innerHTML 存档走） ----------
+   按日存档后：记录仍全部存在页面级 [data-tbrecwrap] 里，
+   用「起始段的北京时间日期」判断它属于哪一天 —— 换天不会丢还在跑的计时。 */
+function tbRecDay(o){
+  const ts=o&&o.g&&o.g[0]&&o.g[0][0];
+  if(!ts) return "";
+  const d=new Date(ts+8*3600000);
+  return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate());
+}
+function tbAllRecEls(pg){ return $$(".tb-rec[data-tbrec]",pg); }
+function tbRecEls(pg){
+  const all=tbAllRecEls(pg);
+  const day=(pg&&pg.dataset&&pg.dataset.tbday)||"";
+  if(!day) return all;
+  return all.filter(el=>{ const o=tbRecData(el); return !o || tbRecDay(o)===day; });
+}
+/* 计时模式里「当前显示那一天」的容器（按日存档后所有渲染/点击数都要限定到它） */
+function tbScope(pg){
+  if(!pg||!pg.querySelector) return pg;
+  const w=pg.querySelector("[data-tbwrap]");
+  return (w && w.querySelector(".tb-day.on")) || pg;
+}
 function tbRecData(el){
   try{ const o=JSON.parse(el.dataset.tbrec||""); return (o&&o.g)?o:null; }catch(_){ return null; }
 }
@@ -5604,10 +5636,11 @@ function tbAddRec(pg,o){
   wrap.appendChild(el);
   return el;
 }
-/* 进行中 / 暂停中的那条（同一页只应有一条；done 的不算） */
+/* 进行中 / 暂停中的那条（同一页只应有一条；done 的不算）
+   ⚠️ 扫全页所有记录（不只当前那天）：换天看一眼别的日子，正在跑的计时不能因此「消失」 */
 function tbCur(pg){
   let out=null;
-  tbRecEls(pg).some(el=>{
+  tbAllRecEls(pg).some(el=>{
     const o=tbRecData(el);
     if(o && (o.s==="run"||o.s==="pause")){ out={el:el, o:o}; return true; }
     return false;
@@ -5644,18 +5677,70 @@ function tbHms(s){
 /* 时长文案：<1 分写「x秒」，其余写「x分」（右栏块与结束提示共用） */
 function tbDur(s){ s=Math.max(0,Math.round(s)); return s<60 ? s+"秒" : Math.round(s/60)+"分"; }
 /* ---------- 页头：日期 + 实时时钟 + 星期圆点 ---------- */
+/* ---------- 页头：日期（样式与日计划同款：DATE + 日期框 + 星期方块） ---------- */
 function tbHead(pg){
   const iso=pg.dataset.tbday||"";
-  const d=$(".tb-d",pg);
-  if(d) d.textContent=iso? iso+" · "+(weekdayOf(iso)||"") : "";
-  const hm=$(".tb-hm",pg);
-  if(hm && !hm.children.length){
-    const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-    const idx=m? new Date(Date.UTC(+m[1],+m[2]-1,+m[3])).getUTCDay() : -1;
+  /* 星期方块先建好，交给 syncDates 去点亮/填「周五」——全站同一套逻辑 */
+  const dow=$(".auto-dow",pg);
+  if(dow && !dow.children.length){
     let s="";
-    for(let i=0;i<7;i++) s+='<span class="'+(i===idx?"on":"")+'">'+WD[i][0]+'</span>';
-    hm.innerHTML=s;
+    for(let i=0;i<7;i++) s+='<span>'+WD[i][0]+'</span>';
+    dow.innerHTML=s;
   }
+  const inp=$(".dinput",pg);
+  if(inp && iso && inp.value!==iso){ inp.value=iso; inp.setAttribute("value",iso); }
+  syncDates(pg);
+}
+/* ---------- 计时模式：按日切换 ---------- */
+function tbDayBlock(pg,iso){
+  const wrap=$("[data-tbwrap]",pg)||pg;
+  let blk=$(`.tb-day[data-ymd="${iso}"]`,wrap);
+  if(!blk){
+    blk=document.createElement("div");
+    blk.className="tb-day"; blk.dataset.ymd=iso;
+    blk.innerHTML=tbTTBody();
+    wrap.appendChild(blk);
+  }
+  $$(".tb-day",wrap).forEach(b=>b.classList.toggle("on",b===blk));
+  return blk;
+}
+function tbShowDay(pg,iso){
+  if(!pg||!iso) return;
+  pg.dataset.tbday=iso;
+  tbDayBlock(pg,iso);
+  tbHead(pg);
+  tbClockTick(pg);
+  tbNowline(pg);
+  tbRender(pg);                              /* 只画这一天的记录块 */
+  tbChips(pg);
+}
+/* 老存档迁移：计时模式原来「一页一天、日期只显示不可选」。
+   补上日期选择器，并把计划表包进 data-tbday 那天的 tb-day 区块（记录本来就在页面级容器里）。 */
+function migrateTimerDays(scope){
+  const pages=(scope&&scope.dataset&&scope.dataset.tpl==="timer")
+    ? [scope] : $$('.page[data-tpl="timer"]',scope||book);
+  let dirty=false;
+  pages.forEach(pg=>{
+    if($("[data-tbwrap]",pg)) return;
+    const iso=/^\d{4}-\d{2}-\d{2}$/.test(pg.dataset.tbday||"") ? pg.dataset.tbday : tbToday();
+    pg.dataset.tbday=iso;
+    const head=$(".tb-date",pg);
+    if(head && !$(".dinput",head)){
+      head.innerHTML='<span class="tb-dlbl">DATE</span>'+dateField(iso)+
+        '<div class="dow auto-dow" style="margin:0;flex:1 1 auto;min-width:0;max-width:152px"></div>';
+      dirty=true;
+    }
+    const tt=$(".tt2",pg), sect=tt&&tt.closest(".sect");
+    if(sect){
+      const wrap=document.createElement("div");
+      wrap.className="tb-days"; wrap.dataset.tbwrap="1";
+      const blk=document.createElement("div");
+      blk.className="tb-day on"; blk.dataset.ymd=iso;
+      sect.replaceWith(wrap); blk.appendChild(sect); wrap.appendChild(blk);
+      dirty=true;
+    }
+  });
+  return dirty;
 }
 function tbClockTick(pg){
   const c=$(".tb-clock",pg); if(!c) return;
@@ -5665,7 +5750,7 @@ function tbClockTick(pg){
 /* ---------- 现在线（虚线 + 圆点 + 镂空「x分」）----------
    只在「页面就是今天、且现在落在 07:00–24:00」时出现。 */
 function tbNowline(pg){
-  const nl=$("[data-nowline]",pg); if(!nl) return;
+  const nl=$("[data-nowline]",tbScope(pg)); if(!nl) return;
   let show=false, min=NaN;
   if(pg.dataset.tbday===tbToday()){
     min=tbMin(pg, Date.now());
@@ -5680,7 +5765,7 @@ function tbNowline(pg){
 /* ---------- 右栏：按记录画块（两行式） ---------- */
 function tbRender(pg){
   if(!pg) return;
-  const layer=$("[data-alayer]",pg); if(!layer) return;
+  const layer=$("[data-alayer]",tbScope(pg)); if(!layer) return;
   layer.innerHTML="";
   tbRecEls(pg).forEach(el=>{
     const o=tbRecData(el); if(!o) return;
@@ -5707,7 +5792,7 @@ function tbChips(pg){
   const cur=tbCur(pg);
   const o=cur&&cur.o;
   const it=o ? tbItemFor(pg,o) : null;
-  $$(".tt-it.running",pg).forEach(x=>{
+  $$(".tt-it.running",tbScope(pg)).forEach(x=>{
     if(x===it) return;
     x.classList.remove("running");
     const c=$(".run-chip",x); if(c) c.remove();
@@ -5730,10 +5815,7 @@ function tbChips(pg){
 function tbInit(pg){
   if(!pg) return;
   if(!/^\d{4}-\d{2}-\d{2}$/.test(pg.dataset.tbday||"")) pg.dataset.tbday=tbToday();
-  tbHead(pg);
-  tbClockTick(pg);
-  tbRender(pg);
-  tbChips(pg);
+  tbShowDay(pg,pg.dataset.tbday);      /* 区块懒创建 + 头部 + 当年那天的记录块 */
   dailyRefresh(pg);            /* Todo 区＝周计划那一格的镜像（和日计划页同一份数据） */
 }
 /* ---------- 每秒 tick：现在线 / 时钟 / live 块 / 徽标 / 弹窗数字 ---------- */
@@ -5754,7 +5836,7 @@ function tbTick(){
       save();
     }
     /* live 块：原地更新高度与秒数（不重建） */
-    const blk=$("[data-tblive]",pg);
+    const blk=$("[data-tblive]",tbScope(pg));
     if(blk){
       if(o.s==="run"){
         const g=o.g[o.g.length-1];
@@ -7875,7 +7957,15 @@ function cleanTplHtml(page){
   $$(".tt-it.running",c).forEach(x=>x.classList.remove("running"));
   const rw=$("[data-tbrecwrap]",c);
   if(rw) rw.innerHTML="";
-  if(c.dataset.tpl==="timer") delete c.dataset.tbday;
+  if(c.dataset.tpl==="timer"){
+    delete c.dataset.tbday;
+    /* 计时页的日区块：模板只留当前那一天（其余天的计划框不跟着模板走） */
+    const w=$("[data-tbwrap]",c);
+    if(w){
+      const on=$(".tb-day.on",w)||$(".tb-day",w);
+      $$(".tb-day",w).forEach(b=>{ if(b!==on) b.remove(); });
+    }
+  }
   if(c.dataset.tpl==="daily") delete c.dataset.dy;   /* 日计划：插入后按当天重算 */
   /* 年计划：模板只留当前那一年（其余年份的数据不跟着模板走） */
   if(c.dataset.tpl==="yearly"){
@@ -8240,6 +8330,7 @@ function load(){
   if(migrateDailyTimetable(book)) __migrated=true; /* 老存档：日计划时间表补 07 / 24 两行 */
   if(migrateDailyDays(book)) __migrated=true;      /* 老存档：日计划改按日存档（现有内容归到当天） */
   if(migrateTimerRows(book)) __migrated=true;      /* 老存档：计时页的行结构包一层 .tt-r（支持排期） */
+  if(migrateTimerDays(book)) __migrated=true;      /* 老存档：计时页改按日存档 + 日期可选 */
   if(ttNormalize(book)) __migrated=true;           /* 老存档：时间表格子包成条目 */
   if(migrateDailyTodo(book)) __migrated=true;      /* 老存档：Todo 去掉「● 任务」占位 */
   if(migrateChkKind(book)) __migrated=true;        /* 老存档：Todo 行补 data-tdk 与类型标记位 */
@@ -9630,6 +9721,11 @@ document.addEventListener("change",function(e){
       toast(m&&before!==t.value
         ? (m[2]*1)+"月"+(m[3]*1)+"日 · 来自周计划的 "+n+" 条"
         : "Todo 已同步");
+    }
+    /* 计时模式：改日期＝切到那一天（计划表按天，记录按起始日过滤） */
+    if(t.closest('[data-tpl="timer"]')){
+      tbShowDay(pg,t.value);
+      dailyRefresh(pg);
     }
     save();
     return;
