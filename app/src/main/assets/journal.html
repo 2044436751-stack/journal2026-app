@@ -6160,14 +6160,10 @@ function caretOffsetIn(el){
   return pre.toString().length;
 }
 /* 按「第几个字」把光标放回元素 */
-/* 只是「把光标放回原处」的聚焦（镜像/时间表重建之后）——
-   >0 时 focusin 不再做「首次聚焦」的强制居中，否则每打一个字镜像一重建
-   就会把页面重新拉到 42% 处，表现成「打完字页面往上滑一下」。（2026-10-23） */
-let caretRestore=0;
+/* 把光标放回原处的聚焦（镜像/时间表重建之后）：必须 preventScroll，
+   否则浏览器自作主张把元素滚进视野，页面会跟着动一下。（2026-10-23） */
 function focusQuiet(el){
-  caretRestore++;
   try{ el.focus({preventScroll:true}); }catch(_){ if(el.focus) el.focus(); }
-  finally{ caretRestore--; }
 }
 function setCaretOffset(el,off){
   if(off==null) return;
@@ -10678,14 +10674,17 @@ function updateKbdBar(){
   }
 }
 
-/* 聚焦后的完整处理：加高 → 滚动
-   force=true 只在「第一次聚焦」用：把输入框放到可视区约 42% 处。
-   后续补滚（键盘弹出动画 / 尺寸变化）一律非强制 —— 只在真的被挡住时才滚，
-   否则键盘一收起、可视区变高，就会把输入框重新拉上去，表现成「打完字页面往上滑一下」。 */
+/* 聚焦后的处理：**只加底部留白，不做任何自动滚动**。
+   以前这里会在聚焦瞬间把输入框挪到可视区约 42% 处（force），
+   之后还有 100/260/420ms 的三次补滚 —— 点在下半屏的条目就会被整个抬上去，
+   手指底下的东西跟着走了，表现成「页面自动往上滑一点 / 怎么点都点不中」。
+   用户要求：页面必须定住，手指点到哪就停在哪，滚动条只由他本人控制。
+   所以这里彻底不碰滚动：键盘弹出时靠 updateKbdBar 加的**底部留白**保证文档滚得动，
+   想看下面的内容自己往上划一下即可。
+   （ensureVisible 仍然保留，但只留给「菜单 / 弹层 / 跳转定位」这类主动定位场景。） */
 function handleEditFocus(t,force){
   activeEdit=t;
   updateKbdBar();
-  ensureVisible(t,(force!==false) && caretRestore===0);
 }
 
 /* 新增同类型项：插到当前条目正下方
@@ -10703,7 +10702,7 @@ function addSibling(el){
     yplEnsureIds(ni.closest(".page")||book);   /* 工具条「＋类型」新起的也要有 ID */
     const ce=$(".yp-txt",ni);
     renumberOL(items);
-    if(ce){ ce.focus(); ensureVisible(ce,true); }
+    if(ce){ focusQuiet(ce); }   /* 不自动滚动：页面定住 */
     save(); return;
   }
   const gi=el.closest(".grow-item");
@@ -10713,7 +10712,7 @@ function addSibling(el){
     if(btn&&btn.dataset.additem){
       btn.click();
       const ce=$("[contenteditable]",list.lastElementChild);
-      if(ce){ ce.focus(); ensureVisible(ce,true); }
+      if(ce){ focusQuiet(ce); }
     }
     return;
   }
@@ -10725,7 +10724,7 @@ function addSibling(el){
       if(btn&&btn.dataset.addrow){
         btn.click();
         const ce=$("[contenteditable]",tb.querySelector("tbody").lastElementChild);
-        if(ce){ ce.focus(); ensureVisible(ce,true); }
+        if(ce){ focusQuiet(ce); }
       }
     }
   }
@@ -10737,18 +10736,9 @@ document.addEventListener("focusin",function(e){
   /* 只要在打字就补底部留白：哪怕这一格不做避让（时间格/日历格），
      也得让文档能滚 —— 否则最后一页最下面被键盘挡住时「划不动」。 */
   editFocus=t;
-  updateKbdBar();
-  /* 日历格 / 时间表格子例外：格子很矮（29px），**强制居中**的滚动会让点击目标错位
-     （横向滚动容器里更明显——时间表文字现在是横向滑动的），所以不做强制居中。
-     但「被键盘挡住」时还是要往上滚一次，否则点了最后一格只能盯着键盘发呆。 */
-  if(t.closest&&(t.closest(".cg-cell")||t.closest(".tt-r")||t.closest(".tt2 .tt-c"))){
-    [0,140,320].forEach(ms=>setTimeout(()=>{ if(editFocus===t) ensureVisible(t,false); },ms));
-    return;
-  }
-  /* 键盘弹出有延迟，多次补滚确保到位（补滚不强制重新居中，只在被挡住时滚） */
+  /* 只加底部留白，不做任何自动滚动（详见 handleEditFocus 的注释）。
+     日历格 / 时间格 / 任何页面都一样：手指点到哪，页面就停在哪。 */
   handleEditFocus(t);
-  requestAnimationFrame(()=>handleEditFocus(t,false));
-  [100,260,420].forEach(ms=>setTimeout(()=>{ if(activeEdit===t) handleEditFocus(t,false); },ms));
 });
 
 document.addEventListener("focusout",function(e){
