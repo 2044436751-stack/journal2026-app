@@ -658,6 +658,9 @@ td.selcell{padding:3px 4px!important}
 .yp-ybtn:active{background:var(--soft)}
 .yp-year{font-size:21px;font-variant-numeric:tabular-nums;color:var(--ink2);letter-spacing:.04em;min-width:3.2em;text-align:center;display:inline-block}
 .yp-list{border-top:1px solid var(--line2)}
+/* 年计划按年存档（2026-10-23）：每年一套 12 个月块，切年份只换 .on */
+.yp-yblk{display:none}
+.yp-yblk.on{display:block}
 .yp-month{border-bottom:1px solid var(--line2)}
 .yp-mrow{display:flex;align-items:center;justify-content:space-between;padding:9px 1px}
 .yp-mname{font-size:17px;color:var(--ink);letter-spacing:.02em}
@@ -2956,7 +2959,7 @@ function yplEnsureIds(scope){
 function yplTargets(){
   const out=[];
   $$('.page[data-tpl="yearly"]',book).forEach(pg=>{
-    $$(".yp-month",pg).forEach(mo=>{
+    $$(".yp-month",ypListOf(pg)).forEach(mo=>{
       const m=parseInt(mo.dataset.m,10);
       const items=[];
       $$(".yp-item",mo).forEach(it=>{
@@ -3609,11 +3612,12 @@ function fitNormalize(scope){
   return changed;
 }
 
-T.yearly = ()=>{
-  const y=TODAY.getFullYear();
+/* 一年的 12 个月块（每年新建块时用它；当前月在当年才高亮） */
+function ypListBody(){
+  const cy=TODAY.getFullYear(), cm=TODAY.getMonth();
   let ms="";
   for(let i=0;i<12;i++){
-    ms+=`<div class="yp-month${i===TODAY.getMonth()?" cur":""}" data-m="${i}">`+
+    ms+=`<div class="yp-month${i===cm?" cur":""}" data-m="${i}">`+
       `<div class="yp-mrow">`+
         `<span class="yp-mname">${i+1}月</span>`+
         `<button class="yp-add" data-mk="1" title="添加">＋</button>`+
@@ -3621,8 +3625,12 @@ T.yearly = ()=>{
       `<div class="yp-items"></div>`+
     `</div>`;
   }
+  return ms;
+}
+T.yearly = ()=>{
+  const y=TODAY.getFullYear();
   return `
-<div class="page" data-label="Year Plan" data-tpl="yearly">
+<div class="page" data-label="Year Plan" data-tpl="yearly" data-yy="${y}">
   <div class="yp-head">
     <div class="yp-top">
       <span class="yp-ttl" data-yttl="1">${y}年计划</span>
@@ -3630,7 +3638,9 @@ T.yearly = ()=>{
       <div class="yp-pop" data-ypop="1"></div>
     </div>
   </div>
-  <div class="yp-list">${ms}</div>
+  <div class="yp-years" data-ywrap="1">
+    <div class="yp-yblk on" data-y="${y}"><div class="yp-list">${ypListBody()}</div></div>
+  </div>
 </div>`;
 };
 
@@ -3707,7 +3717,7 @@ function pageSummary(pg){
   /* 年计划 → 年份 */
   if(t==="yearly"){
     const y=$(".yp-year",pg);
-    const n=pg.querySelectorAll(".yp-item").length;
+    const n=$$(".yp-item",ypListOf(pg)).length;
     return (y?y.textContent:"—")+" 年 · "+n+" 条";
   }
   /* 年度日历 → 年份 */
@@ -3844,13 +3854,36 @@ function renumberOL(scope){
   });
 }
 
-/* 年计划：年份切换后同步标题字样 + 重算当前月高亮 */
+/* 年计划：当前显示的那一年的列表（按年存档后要处处用它取作用域，别直接用 .yp-list） */
+function ypListOf(pg){
+  if(!pg) return null;
+  const blk=pg.querySelector("[data-ywrap] .yp-yblk.on");
+  return (blk && blk.querySelector(".yp-list")) || pg.querySelector(".yp-list") || pg;
+}
+/* 年计划：切到某一年（没有就新建一年的 12 个月块） */
+function ypShowYear(pg,y){
+  if(!pg) return;
+  y=parseInt(y,10)||TODAY.getFullYear();
+  const wrap=$("[data-ywrap]",pg)||pg;
+  let blk=$(`.yp-yblk[data-y="${y}"]`,wrap);
+  if(!blk){
+    blk=document.createElement("div");
+    blk.className="yp-yblk"; blk.dataset.y=y;
+    blk.innerHTML='<div class="yp-list">'+ypListBody()+'</div>';
+    wrap.appendChild(blk);
+  }
+  $$(".yp-yblk",wrap).forEach(b=>b.classList.toggle("on",b===blk));
+  pg.dataset.yy=y;
+  const el=$(".yp-year",pg); if(el) el.textContent=y;
+  ypUpdateCur(pg);
+}
+/* 年计划：年份切换后同步标题字样 + 重算当前月高亮（只看当前这一年的月块） */
 function ypUpdateCur(pg){
   const el=$(".yp-year",pg); if(!el) return;
   const y=parseInt(el.textContent,10);
   const ttl=$("[data-yttl]",pg);
   if(ttl&&y) ttl.textContent=y+"年计划";
-  $$(".yp-month",pg).forEach(m=>
+  $$(".yp-month",ypListOf(pg)).forEach(m=>
     m.classList.toggle("cur", y===TODAY.getFullYear() && +m.dataset.m===TODAY.getMonth())
   );
 }
@@ -3865,9 +3898,29 @@ function ypClosePop(){
   $$(".yp-pop.on",book).forEach(p=>{ p.classList.remove("on"); p.innerHTML=""; });
 }
 function ypSetYear(pg,y){
-  const el=$(".yp-year",pg); if(!el) return;
-  el.textContent=y;             /* 标题字样由 ypUpdateCur 一并更新 */
-  ypUpdateCur(pg); save();
+  ypShowYear(pg,y);
+  save();
+}
+/* 老存档迁移：年计划原来是「一页一份、12 个月块」，年份只改标题。
+   现在按年存档 —— 把现有那一份整体包成「页面当前那一年」的块，其余年份留空。 */
+function migrateYearlyYears(scope){
+  const pages=(scope&&scope.dataset&&scope.dataset.tpl==="yearly")
+    ? [scope] : $$('.page[data-tpl="yearly"]',scope||book);
+  let dirty=false;
+  pages.forEach(pg=>{
+    if($("[data-ywrap]",pg)) return;
+    const list=$(".yp-list",pg); if(!list) return;
+    const y=parseInt((($(".yp-year",pg)||{}).textContent||""),10)||TODAY.getFullYear();
+    const wrap=document.createElement("div");
+    wrap.className="yp-years"; wrap.dataset.ywrap="1";
+    const blk=document.createElement("div");
+    blk.className="yp-yblk on"; blk.dataset.y=y;
+    list.replaceWith(wrap);
+    blk.appendChild(list); wrap.appendChild(blk);
+    pg.dataset.yy=y;
+    dirty=true;
+  });
+  return dirty;
 }
 /* 老存档 / 老自定义模板里的年计划页头 → 新结构；返回是否有改动 */
 function migrateYPHead(root){
@@ -6880,7 +6933,7 @@ function ypcTargetHTML(it){
 }
 function ypcMonthsHTML(it){
   const pg=it.closest('.page[data-tpl="yearly"]');
-  const mos=$$(".yp-month",pg);
+  const mos=$$(".yp-month",ypListOf(pg));
   let srcM=-1;
   mos.forEach(mo=>{ if(mo.contains(it)) srcM=parseInt(mo.dataset.m,10); });
   let rows="";
@@ -6936,7 +6989,7 @@ function ypcDo(src, key){
   let targetItems=null, label="";
   if(yearly){
     const pg=src.closest('.page[data-tpl="yearly"]');
-    const mo=$$(".yp-month",pg).filter(x=>parseInt(x.dataset.m,10)===key)[0];
+    const mo=$$(".yp-month",ypListOf(pg)).filter(x=>parseInt(x.dataset.m,10)===key)[0];
     if(!mo) return;
     targetItems=$(".yp-items",mo);
     label=(key+1)+"月";
@@ -7824,6 +7877,15 @@ function cleanTplHtml(page){
   if(rw) rw.innerHTML="";
   if(c.dataset.tpl==="timer") delete c.dataset.tbday;
   if(c.dataset.tpl==="daily") delete c.dataset.dy;   /* 日计划：插入后按当天重算 */
+  /* 年计划：模板只留当前那一年（其余年份的数据不跟着模板走） */
+  if(c.dataset.tpl==="yearly"){
+    const yw=$("[data-ywrap]",c);
+    if(yw){
+      const on=$(".yp-yblk.on",yw)||$(".yp-yblk",yw);
+      $$(".yp-yblk",yw).forEach(b=>{ if(b!==on) b.remove(); });
+    }
+    delete c.dataset.yy;
+  }
   const nlc=$("[data-nowline]",c);
   if(nlc){ nlc.classList.add("off"); nlc.style.removeProperty("top"); }
   /* 空白任务表：按日的清单一律不留（插入时按当天建一份）；记住的那天也清掉 */
@@ -7852,7 +7914,17 @@ function hydrateTpl(page){
   const n=bjDate();
   fillEmptyDates(page);
   $$(".yp-year",page).forEach(el=>el.textContent=String(n.getFullYear()));
-  if(page.dataset.tpl==="yearly") ypUpdateCur(page);
+  if(page.dataset.tpl==="yearly"){
+    /* 年计划按年存档：模板里那一年的块改成「插入这年」，否则会另建一个空块、模板内容被藏起来 */
+    const blk=$(".yp-yblk",page);
+    if(blk){
+      blk.dataset.y=String(n.getFullYear());
+      blk.classList.add("on");
+      $$(".yp-yblk",page).forEach(b=>{ if(b!==blk) b.remove(); });
+    }
+    page.dataset.yy=String(n.getFullYear());
+    ypUpdateCur(page);
+  }
   const wrap=$("[data-mcwrap]",page);
   if(wrap){
     /* 自定义模板里没存月份区块，这里清一次以防万一 */
@@ -8211,6 +8283,7 @@ function load(){
   });
   /* 年计划页头改版：标题在左 + 年份切片器紧随其后；原来那行操作提示去掉 */
   if(migrateYPHead(book)) __migrated=true;
+  if(migrateYearlyYears(book)) __migrated=true;   /* 老存档：年计划改按年存档（现有内容归到当前那年） */
   /* 打卡页：习惯行补删除列 + 底部补新增入口 */
   if(migrateHabit(book)) __migrated=true;
   if(migrateHabitWeeks(book)) __migrated=true;   /* 老存档：打卡页改周视图（补星期行/小计/data-w，打卡记录不动） */
