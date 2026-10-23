@@ -1772,16 +1772,21 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
   height:40px;border-radius:3px;cursor:pointer;
 }
 /* 红块：删除（右贴，藏在内容层下方，左滑露出）
-   ⚠️ 必须自带与行同半径的右侧圆角：行是 overflow:hidden 的 3px 圆角矩形，
-   上面白色内容层也是 3px 圆角，两层在弧线上各自抗锯齿会留一道亚像素缝，
-   红块就会从缝里透出来 —— 右缘出现一串红色小弧（2026-10-23 修）。 */
+   ⚠️ 平时 `visibility:hidden`，只有这一行真的被左滑（.sw-on）时才显示 ——
+   只靠「白色内容层盖住红块」是不保险的：真机 WebView 里 .dw-c 带 will-change:transform
+   会被提升成独立合成层，圆角裁剪在合成层上不一定生效，红块就会从右缘圆角处透出来。
+   让它平时根本不画，才是根治（2026-10-23 二次修）。
+   同半径圆角也保留：滑动露出时红块与行的轮廓一致。 */
 .dw-r .dw-del{
   position:absolute;top:0;right:0;bottom:0;width:64px;z-index:0;
+  visibility:hidden;
   background:#c0392b;color:#fff;border-radius:0 3px 3px 0;
   display:flex;align-items:center;justify-content:center;gap:5px;
   font-size:15px;letter-spacing:.06em;
 }
 .dw-r .dw-del .x{font-size:17px;font-weight:700;line-height:1}
+/* 只有滑动中 / 滑开的那一行才显示红块（类由 dwSwipe* 维护） */
+.dw-r.sw-on .dw-del{visibility:visible}
 /* 内容层：负责平移露出红块，底色与抽屉一致以遮挡 */
 .dw-r .dw-c{
   position:relative;z-index:1;
@@ -10385,6 +10390,7 @@ function dwSwipeReset(){
   if(DW_OPEN_ROW){
     const c=DW_OPEN_ROW.querySelector(".dw-c");
     if(c){ c.style.transition="transform .18s ease"; c.style.transform=""; }
+    DW_OPEN_ROW.classList.remove("sw-on");     /* 红块重新藏起来（平时不画，见 CSS 注释） */
     DW_OPEN_ROW=null;
   }
 }
@@ -10404,6 +10410,7 @@ function dwSwipeMove(e){
   if(!st.active){
     if(Math.abs(dx)>SWIPE_TRIG && Math.abs(dx)>Math.abs(dy)){
       st.active=true;
+      st.row.classList.add("sw-on");                  /* 开始滑了才让红块出现 */
       if(DW_DRAG){ clearTimeout(DW_DRAG.timer); DW_DRAG=null; }  /* 别启动长按排序 */
       try{ st.row.setPointerCapture(st.id); }catch(_){}
     } else if(Math.abs(dy)>SWIPE_TRIG && Math.abs(dy)>=Math.abs(dx)){
@@ -10426,8 +10433,12 @@ function dwSwipeUp(){
     st.c.style.transform = open ? "translateX(-"+SWIPE_W+"px)" : "";
     setTimeout(()=>{ if(st.c) st.c.style.transition=""; },200);
   }
-  if(open){ if(DW_OPEN_ROW&&DW_OPEN_ROW!==st.row) dwSwipeReset(); DW_OPEN_ROW=st.row; }
-  else if(DW_OPEN_ROW===st.row) DW_OPEN_ROW=null;
+  if(open){ if(DW_OPEN_ROW&&DW_OPEN_ROW!==st.row) dwSwipeReset(); DW_OPEN_ROW=st.row; st.row.classList.add("sw-on"); }
+  else{
+    if(DW_OPEN_ROW===st.row) DW_OPEN_ROW=null;
+    /* 没滑开：等内容滑回原处（180ms）再把红块藏掉 */
+    setTimeout(()=>{ if(DW_OPEN_ROW!==st.row) st.row.classList.remove("sw-on"); },200);
+  }
 }
 /* 点红块删除：复用既有确认逻辑 */
 function dwSwipeDelete(dwr){
