@@ -115,6 +115,16 @@ table td.n{border-bottom:1px solid var(--line2)}
 .sync-note{display:none;font-size:12.5px;color:var(--ink3);margin-top:6px;letter-spacing:.02em}
 .sync-note.on{display:block}
 
+/* ---------- 日计划：按日存档（2026-10-23）----------
+   日期切换只换 .dy-day.on：头部「今天最重要的一件事 + 天气」一块，
+   时间表（Timetable）另一块，都用 .dy-day[data-ymd] 懒创建、永不删除。
+   Todo 不在里面 —— 它本来就是「周计划那一天那一格」的镜像，天然按日。 */
+.dy-head{position:relative}
+.dy-day{display:none}
+.dy-day.on{display:block}
+.dy-note{font-size:12.5px;margin-top:3px;padding-right:86px}   /* 右边给天气图标留位 */
+.dy-day .weather{position:absolute;right:0;top:0}
+
 /* ============ 勾选行 ============ */
 .chk{display:flex;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px solid var(--line2)}
 .box{
@@ -4892,32 +4902,45 @@ T.weekly = ()=>{
 </div>`;
 };
 
-/* ---------- 日计划（图5） ---------- */
+/* ---------- 日计划（图5） ----------
+   按日存档（2026-10-23）：切日期只换 .dy-day.on。
+   两个独立容器都按 data-ymd 存一天：
+     [data-dywrap] → 头部「今天最重要的一件事 + 天气」
+     [data-dytw]   → Timetable 整张表
+   Todo 不在这两个容器里：它是「周计划 · 那一天那一格」的镜像，本来就按日。 */
+const DY_WX=[
+  ["sun","晴",()=>ICO.sun],["cloud","多云",()=>ICO.cloud],
+  ["rain","雨",()=>ICO.rain],["snow","雪",()=>ICO.snow]
+];
+function dyTopBody(){
+  return `<div class="dy-note" contenteditable="true" data-ph="今天最重要的一件事">今天最重要的一件事</div>`+
+    `<div class="weather">`+DY_WX.map(w=>`<div class="wx" data-wx="${w[0]}" title="${w[1]}">${w[2]()}</div>`).join("")+`</div>`;
+}
+function dyTTBody(){
+  let col="";
+  /* 时间表 07–24 单列一路往下排（用户 2026-10-12 定：不再分两列） */
+  for(let h=7;h<=24;h++) col+=`<div class="tt-r">${ttRowHTML(h)}</div>`;
+  return `<div class="sect">`+
+    `<div class="lbl"><span>Timetable</span><span class="hint">先排重点，再补杂事</span></div>`+
+    `<div class="tt"><div class="tt-col">${col}</div></div>`+
+  `</div>`;
+}
 T.daily = ()=>{
-  const d=new Date(), ds=fmtDate(d), wd=WD[d.getDay()];
+  const d=new Date(), iso=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
   let dow="";
   for(let i=0;i<7;i++) dow+=`<span class="${i===d.getDay()?'on':''}">${WD[i][0]}</span>`;
-  let col1="";
-  /* 时间表 07–24 单列一路往下排（用户 2026-10-12 定：不再分两列） */
-  for(let h=7;h<=24;h++) col1+=`<div class="tt-r">${ttRowHTML(h)}</div>`;
   return `
-<div class="page" data-label="Daily" data-tpl="daily">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-    <div style="flex:1">
-      <h1 class="p-title">Today's List</h1>
-      <div style="font-size:12.5px;margin-top:3px" contenteditable="true" data-ph="今天最重要的一件事">今天最重要的一件事</div>
-    </div>
-    <div class="weather">
-      <div class="wx" data-wx="sun" title="晴">${ICO.sun}</div>
-      <div class="wx" data-wx="cloud" title="多云">${ICO.cloud}</div>
-      <div class="wx" data-wx="rain" title="雨">${ICO.rain}</div>
-      <div class="wx" data-wx="snow" title="雪">${ICO.snow}</div>
+<div class="page" data-label="Daily" data-tpl="daily" data-dy="${iso}">
+  <div class="dy-head">
+    <h1 class="p-title">Today's List</h1>
+    <div class="dy-days" data-dywrap="1">
+      <div class="dy-day on" data-ymd="${iso}">${dyTopBody()}</div>
     </div>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:9px 0 6px">
     <div style="flex:0 0 46%;display:flex;align-items:center;gap:5px">
       <span style="font-size:9.5px;letter-spacing:.1em;color:var(--ink2)">DATE</span>
-      ${dateField(d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()))}
+      ${dateField(iso)}
     </div>
     <div class="dow auto-dow" style="margin:0;flex:1 1 auto;min-width:0;max-width:152px">${dow}</div>
   </div>
@@ -4925,9 +4948,8 @@ T.daily = ()=>{
     <div class="lbl"><span>Todo</span></div>
     <div class="grow-list"></div>
   </div>
-  <div class="sect">
-    <div class="lbl"><span>Timetable</span><span class="hint">先排重点，再补杂事</span></div>
-    <div class="tt"><div class="tt-col">${col1}</div></div>
+  <div class="dy-days" data-dytw="1">
+    <div class="dy-day on" data-ymd="${iso}">${dyTTBody()}</div>
   </div>
 </div>`;
 };
@@ -5052,9 +5074,18 @@ function ttRangeText(hrs){
   }).join(" · ");
 }
 /* 找某一小时那一行（按 .tt-h 的文字认） */
+/* 时间表的作用域：日计划按日存档后，页面里有两套 .dy-day.on
+   （头部一块、时间表一块）—— 取时间表那一套，别抓到头部去了 */
+function ttScope(pg){
+  if(!pg||!pg.querySelector) return pg;
+  const tw=pg.querySelector("[data-dytw]");
+  return (tw && tw.querySelector(".dy-day.on")) || pg;
+}
 function ttRowOf(pg,h){
+  /* 日计划按日存档：只看当前那一天的时间表，别抓到隐藏日区块里的行 */
+  const sc=ttScope(pg)||pg||book;
   let r=null;
-  $$(".tt-r",pg||book).some(x=>{
+  $$(".tt-r",sc).some(x=>{
     const t=$(".tt-h",x);
     if(t && t.textContent.trim()===pad(h)){ r=x; return true; }
     return false;
@@ -5247,8 +5278,10 @@ function ttBusy(pg,h){
    幂等：只复位「上次由 Todo 画出来的」条目（data-ttauto），用户自己写的一律不碰。 */
 function ttRender(pg){
   if(!pg) return;
+  /* 日计划按日存档：只处理当前那一天的时间表区块（ttScope 会避开头部那块） */
+  const sc=ttScope(pg)||pg;
   /* ① 复位上一次自动渲染的条目 + 清掉块样式 */
-  $$(".tt-r",pg).forEach(r=>{
+  $$(".tt-r",sc).forEach(r=>{
     r.classList.remove("tt-task-row","tt-blk","tt-blk-first","tt-blk-last","tt-done");
     const h=parseInt((($(".tt-h",r)||{}).textContent||"").trim(),10);
     const it=ttItemAt(pg,h);
@@ -5334,6 +5367,73 @@ function ttBadges(pg){
 function ttRefresh(pg){
   if(!pg){ $$('.page[data-tpl="daily"]',book).forEach(ttRefresh); return; }
   ttBadges(pg); ttRender(pg);
+}
+/* ---------- 日计划：按日切换（2026-10-23）----------
+   头部一块 [data-dywrap]、时间表一块 [data-dytw]，各存一套 .dy-day[data-ymd]，
+   懒创建、永不删除（和其它按日/按周页面同一套约定）。 */
+function dyBlk(wrap,iso,html){
+  let blk=$(`.dy-day[data-ymd="${iso}"]`,wrap);
+  if(!blk){
+    blk=document.createElement("div");
+    blk.className="dy-day"; blk.dataset.ymd=iso;
+    blk.innerHTML=html;
+    wrap.appendChild(blk);
+  }
+  $$(".dy-day",wrap).forEach(b=>b.classList.toggle("on",b===blk));
+  return blk;
+}
+function dyShow(pg,iso){
+  if(!pg||!iso) return;
+  const hw=$("[data-dywrap]",pg), tw=$("[data-dytw]",pg);
+  if(hw) dyBlk(hw,iso,dyTopBody());
+  if(tw) dyBlk(tw,iso,dyTTBody());
+  pg.dataset.dy=iso;
+  const inp=$(".dinput",pg);
+  if(inp && inp.value!==iso){ inp.value=iso; inp.setAttribute("value",iso); }
+  ttRefresh(pg);                 /* 新的一天：时间表按 data-tt 重画（空块全空） */
+}
+function dyInitPage(pg){
+  if(!pg) return;
+  let iso=pg.dataset.dy;
+  if(!iso){ const inp=$(".dinput",pg); iso=(inp&&inp.value)||""; }
+  if(!iso) iso=ddISO(bjDate());
+  dyShow(pg,iso);
+}
+/* 老存档迁移：日计划原来是一页一份内容（一句话 / 天气 / 时间表都不跟日期走）。
+   把这三样整体包进「页面当前那一天」的 dy-day 区块，其余日期留空 —— 内容一条不丢。 */
+function migrateDailyDays(scope){
+  const pages=(scope&&scope.dataset&&scope.dataset.tpl==="daily")
+    ? [scope] : $$('.page[data-tpl="daily"]',scope||book);
+  let dirty=false;
+  pages.forEach(pg=>{
+    if($("[data-dywrap]",pg)) return;                 /* 已经迁过 */
+    const h1=$("h1.p-title",pg)||$(".p-title",pg);
+    const note=$('[data-ph="今天最重要的一件事"]',pg);
+    const wx=$(".weather",pg);
+    if(!h1||!note||!wx) return;
+    const row=h1.parentElement&&h1.parentElement.parentElement;
+    if(!row) return;
+    const inp=$(".dinput",pg);
+    const iso=(inp&&inp.value)||ddISO(bjDate());
+    /* 头部：h1 + [一句话 + 天气] */
+    const head=document.createElement("div"); head.className="dy-head";
+    const hw=document.createElement("div"); hw.className="dy-days"; hw.dataset.dywrap="1";
+    const hb=document.createElement("div"); hb.className="dy-day on"; hb.dataset.ymd=iso;
+    note.className="dy-note"; note.removeAttribute("style");
+    hb.appendChild(note); hb.appendChild(wx);
+    hw.appendChild(hb); head.appendChild(h1); head.appendChild(hw);
+    row.replaceWith(head);
+    /* 时间表：整块 sect 包进另一套 dy-day */
+    const tt=$(".tt",pg), sect=tt&&tt.closest(".sect");
+    if(sect){
+      const tw=document.createElement("div"); tw.className="dy-days"; tw.dataset.dytw="1";
+      const tb=document.createElement("div"); tb.className="dy-day on"; tb.dataset.ymd=iso;
+      tw.appendChild(tb); sect.replaceWith(tw); tb.appendChild(sect);
+    }
+    pg.dataset.dy=iso;
+    dirty=true;
+  });
+  return dirty;
 }
 /* 改了两处中的任一处名字 → 把另一处同步过来（真源是周计划条目，时间表跟着它） */
 function ttSyncName(from){
@@ -7723,6 +7823,7 @@ function cleanTplHtml(page){
   const rw=$("[data-tbrecwrap]",c);
   if(rw) rw.innerHTML="";
   if(c.dataset.tpl==="timer") delete c.dataset.tbday;
+  if(c.dataset.tpl==="daily") delete c.dataset.dy;   /* 日计划：插入后按当天重算 */
   const nlc=$("[data-nowline]",c);
   if(nlc){ nlc.classList.add("off"); nlc.style.removeProperty("top"); }
   /* 空白任务表：按日的清单一律不留（插入时按当天建一份）；记住的那天也清掉 */
@@ -7970,6 +8071,7 @@ function renumber(){
     if(p.dataset.tpl==="daygrid") dgInitPage(p);   /* 一日四格：按日区块 + 四格等高 */
     if(p.dataset.tpl==="weekly") wkInitPage(p);
     if(p.dataset.tpl==="food") fjInitPage(p);
+    if(p.dataset.tpl==="daily") dyInitPage(p);          /* 日计划：按日区块（一句话/天气/时间表） */
     if(p.dataset.tpl==="daily"||p.dataset.tpl==="timer"){
       ttRefresh(p);                              /* 按 data-tt 重画时间块 + 徽标（计时页只挂徽标） */
       $$(".grow-list",p).forEach(chkRenumber);   /* Todo 的有序行重排序号 */
@@ -8064,6 +8166,7 @@ function load(){
   if(migrateFoodWeeks(book)) __migrated=true;    /* 老存档：饮食页按周存档，卡片归到各自那一周 */
   if(migrateFoodDrinkPh(book)) __migrated=true;  /* 老存档：饮料行占位「吃了什么」→「喝了什么」 */
   if(migrateDailyTimetable(book)) __migrated=true; /* 老存档：日计划时间表补 07 / 24 两行 */
+  if(migrateDailyDays(book)) __migrated=true;      /* 老存档：日计划改按日存档（现有内容归到当天） */
   if(migrateTimerRows(book)) __migrated=true;      /* 老存档：计时页的行结构包一层 .tt-r（支持排期） */
   if(ttNormalize(book)) __migrated=true;           /* 老存档：时间表格子包成条目 */
   if(migrateDailyTodo(book)) __migrated=true;      /* 老存档：Todo 去掉「● 任务」占位 */
@@ -9443,9 +9546,11 @@ document.addEventListener("change",function(e){
     if(t.closest('[data-tpl="daygrid"]')) dgShow(pg,t.value);   /* 一日四格：按日存档 */
     /* 空白任务表：改日期＝切那天的清单 + 标题跟着变 */
     if(t.closest('[data-tpl="tasklist"]')) tlShow(pg,t.value);
-    /* 日计划：改日期＝换看哪一天，Todo 跟着换成周计划那一天的条目 */
+    /* 日计划：改日期＝切到那天的内容（一句话 / 天气 / 时间表都按日存档），
+       同时 Todo 跟着换成周计划那一天的条目 */
     if(t.closest('[data-tpl="daily"]')){
       const before=dailyISO(pg);
+      dyShow(pg,t.value);
       dailyRefresh(pg);
       const n=dailyRows(pg).length;
       const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(t.value||"");
