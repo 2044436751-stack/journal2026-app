@@ -1316,9 +1316,16 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 .lined.l6{min-height:192px}
 .lined.l8{min-height:256px}
 
-/* 空白尾页（always last）：横线铺满整页，看起来就是一整页可写的纸，
-   而不是「半页横线 + 一大片空白」 */
-.page[data-tail] .lined{min-height:calc(100vh - 190px);min-height:calc(100dvh - 190px)}
+/* 空白尾页（永远最后一页）：纯空白纸面，正中两个字「完结」。
+   整页没有任何 contenteditable —— 点上去不弹键盘、不能写。
+   「完结」用绝对定位钉在页面正中（不参与流式排版，页面上下的内边距不干扰居中）。 */
+.page[data-tail]{position:relative}
+.page[data-tail] .tail-end{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:Georgia,"Songti SC","Noto Serif CJK SC","Source Han Serif SC",STSong,SimSun,serif;
+  font-size:20px; letter-spacing:.2em; text-indent:.2em; color:var(--ink);
+  pointer-events:none; user-select:none;
+}
 
 /* ============ 体重 ============ */
 .wt-top{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-bottom:10px}
@@ -7854,13 +7861,12 @@ T.dotgrid = ()=>`
 /* ---------- 空白尾页（永远钉在最后一页） ----------
    手机键盘弹出时，最后那一页的最下面会顶到屏幕底、没有余量可滚。
    在文档末尾常驻一张空白页，等于给全书留了一整屏的滚动余量：
-   正文最后一行随时能被滚到键盘上方，这一页本身也能随手写。
+   正文最后一行随时能被滚到键盘上方。
+   这一页本身**不可编辑**（点上去不弹键盘），正中两个字「完结」当作全书的句号。
    —— 不进索引 / 抽屉、不编号、没有删除按钮（删了下次 renumber 还会补回来）。 */
 T.tail = ()=>`
 <div class="page" data-label="Notes" data-tpl="blank" data-tail="1">
-  <h2 class="p-title" contenteditable="true" data-ph="标题"></h2>
-  <div class="rule"></div>
-  <div class="lined l8" contenteditable="true" data-ph=""></div>
+  <div class="tail-end">完结</div>
 </div>`;
 
 /* ==========================================================
@@ -8265,6 +8271,18 @@ function delPageYield(){
 window.addEventListener("scroll",delPageYield,{passive:true});
 window.addEventListener("resize",delPageYield);
 
+/* 尾页改版（2026-10-23）：上一版是「可写标题 + 一整页横线」，
+   现在改成纯空白 + 正中「完结」、不可编辑。老存档里的旧结构就地换掉。 */
+function migrateTail(scope){
+  let changed=false;
+  $$('.page[data-tail]',scope||book).forEach(pg=>{
+    if(pg.children.length===1 && $(".tail-end",pg)) return;
+    pg.innerHTML='<div class="tail-end">完结</div>';
+    changed=true;
+  });
+  return changed;
+}
+
 /* ---------- 空白尾页：保证存在、且永远在最后 ----------
    返回 true 表示结构有变化（新建 / 移位 / 清掉多余副本），调用方可据此触发一次保存。 */
 function ensureTail(){
@@ -8430,6 +8448,7 @@ function load(){
   if(migrateDaynoteTitle(book)) __migrated=true;   /* 老存档：每日记录的标题 div → h1（拿回 22px/600/红） */
   if(migrateDateShow(book)) __migrated=true;       /* 老存档：日期字段补自定义选择器的显示层 */
   if(migrateYearcal(book)) __migrated=true;        /* 老存档：年度日历页头换成统一切片器 */
+  if(migrateTail(book)) __migrated=true;            /* 尾页改版：纯空白纸面 + 正中「完结」 */
   if(ensureTail()) __migrated=true;                /* 尾页：没有就补一张，或在别处就搬回最后 */
   renumber();
   /* 日计划页标题：Today's Focus on → Today's List（大小写照原文显示） */
