@@ -3159,7 +3159,7 @@ function openAddMenu(items, kinds){
   /* 插在占位 ＋ 的上一行 —— 就是「准备写的那一行」，菜单本身占位、加号与横线一起下移 */
   const slot=$(".yp-addslot",items);
   if(slot) slot.before(menu); else items.appendChild(menu);
-  ensureVisible(menu,true);
+  revealInView(menu);
   return menu;
 }
 
@@ -3195,7 +3195,7 @@ function yplOpen(it){
   const left=Math.max(0,Math.min(r.left-pr.left,pr.width-W));
   pop.style.left=left+"px";
   pop.style.top=(r.bottom-pr.top+6)+"px";
-  if(typeof ensureVisible==="function") ensureVisible(pop,true);
+  if(typeof revealInView==="function") revealInView(pop);
   return pop;
 }
 /* 第一步：1–12 月，只列有内容的月份；已挂过的月份打个点 */
@@ -3566,7 +3566,7 @@ function openFitMenu(row){
   row.classList.add("fit-menu");       /* 行让位 */
   row.after(menu);                     /* 菜单落在这一行的位置 */
   FIT_MENU_ROW=row;
-  ensureVisible(menu,true);
+  revealInView(menu);
 }
 /* 收菜单＝菜单消失 + 那一行回到原位（少了这步，行会被永久藏住） */
 function closeFitMenu(){
@@ -5051,7 +5051,7 @@ T.timer = ()=>{
     <div class="dow auto-dow" style="margin:0;flex:1 1 auto;min-width:0;max-width:152px"></div>
   </div>
   <div class="sect" style="margin-top:8px">
-    <div class="lbl"><span>Today's List</span></div>
+    <div class="lbl"><span>Todo</span></div>
     <div class="grow-list"></div>
   </div>
   <div class="tb-days" data-tbwrap="1">
@@ -5316,7 +5316,7 @@ function ttOpenMenu(it){
     row.insertAdjacentElement("afterend",menu);
   }
   TT_MENU_ITEM=it;
-  if(typeof ensureVisible==="function") ensureVisible(menu,true);
+  if(typeof revealInView==="function") revealInView(menu);
 }
 /* 老存档：把「一格一段自由文字」包成条目（内容原样搬进 .tt-tx） */
 function ttNormalize(scope){
@@ -6339,7 +6339,18 @@ function tdOpen(it){
   pop.style.width=W+"px";
   pop.style.left=Math.max(0,Math.min(r.left-pr.left,pr.width-W))+"px";
   pop.style.top=(r.bottom-pr.top+6)+"px";
-  if(typeof ensureVisible==="function") ensureVisible(pop,true);
+  /* 上下自适应：下面装不下、上面装得下 → 翻到条目上方。
+     这里**允许 top 为负**：滚到文档底部时 .page 的顶可能在视口中间，
+     弹层会溢出到上一页的地盘上 —— 视觉上完全没问题（它本来就该盖住东西），
+     总好过为了迁就 .page 的框把整页滚走。
+     两边都装不下才留在空间大的那一侧，交给 revealInView 滚最小距离。 */
+  const popH=pop.offsetHeight;
+  const roomBelow=(window.innerHeight||0)-r.bottom-8;
+  const roomAbove=r.top-8;
+  if(popH>roomBelow && popH<=roomAbove){
+    pop.style.top=(r.top-pr.top-6-popH)+"px";
+  }
+  if(typeof revealInView==="function") revealInView(pop);
 }
 function tdToggle(h){
   if(!TD_ITEM) return;
@@ -7009,7 +7020,7 @@ function ypcPlace(pop, it){
   pop.style.width=W+"px";
   pop.style.left=Math.max(0,Math.min(r.left-pr.left,pr.width-W))+"px";
   pop.style.top=(r.bottom-pr.top+6)+"px";
-  if(typeof ensureVisible==="function") ensureVisible(pop,true);
+  if(typeof revealInView==="function") revealInView(pop);
 }
 function ypcOpenPop(html, it){
   $$(".ypl-pop").forEach(p=>p.remove());
@@ -7805,7 +7816,7 @@ function cgOpenMood(pg,cell,item){
   pop.style.marginTop="0px";
   pop.style.left=Math.max(0,Math.min(r.left-hr.left,hr.width-W))+"px";
   pop.style.top=(r.bottom-hr.top+6)+"px";
-  ensureVisible(pop,true);
+  revealInView(pop);
 }
 T.calgrid = ()=>{
   const n=bjDate(), y=n.getFullYear(), m=n.getMonth();
@@ -8440,6 +8451,12 @@ function load(){
   $$('.page[data-tpl="daily"] .p-title',book).forEach(el=>{
     const t=el.textContent.replace(/\s+/g," ").trim();
     if(/^Today'?s Focus on$/i.test(t)){ el.textContent="Today's List"; __migrated=true; }
+  });
+  /* 计时模式的小标题：Today's List → Todo（和日计划页写一样；老存档已把文字烘进 innerHTML） */
+  $$('.page[data-tpl="timer"] .sect>.lbl>span',book).forEach(el=>{
+    if(/^(Today'?s List|Todo List)$/i.test(el.textContent.replace(/\s+/g," ").trim())){
+      el.textContent="Todo"; __migrated=true;
+    }
   });
   /* 读书清单状态面板：老存档里可能还留在月份区块内 → 提到页级 */
   if(migrateBlPop(book)) __migrated=true;
@@ -10613,6 +10630,27 @@ function visBounds(){
     bottom=Math.min(bottom, window.innerHeight-kbFallback());
   }
   return {top, bottom};
+}
+
+/* 弹层 / 菜单专属的定位：**只在真的超出视口时才滚，而且只滚刚好够露出来的量**。
+   不能用 ensureVisible(el,true) —— 那会把弹层「强制挪到屏幕 42% 处」，
+   于是长按一条位于中下部的任务、菜单一冒出来，整页就被抬走好几百 px，
+   手指底下的东西全跑了（2026-10-24 用户报的就是这个）。
+   这里只认物理视口：弹层弹出来的时候输入框已经失焦、键盘正在收起。 */
+function revealInView(el,pad){
+  if(!el || !el.isConnected) return;
+  const p=(pad==null)?8:pad;
+  const r=el.getBoundingClientRect();
+  const vh=window.innerHeight||0;
+  let delta=0;
+  if(r.height>=vh-2*p){
+    /* 比视口还高：只保证顶部露出来，别再往下拽 */
+    if(r.top<p) delta=r.top-p;
+  }else{
+    if(r.bottom>vh-p)      delta=r.bottom-(vh-p);   /* 底部超出 → 往上推刚好够 */
+    else if(r.top<p)       delta=r.top-p;           /* 顶部超出 → 往下拉回来 */
+  }
+  if(Math.abs(delta)>1) window.scrollBy({top:delta,behavior:"auto"});
 }
 
 /* 把元素滚进可视区，并尽量停在可视区上 40% 处，方便看到上文（如月份标题） */
