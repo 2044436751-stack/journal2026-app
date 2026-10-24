@@ -687,6 +687,12 @@ td.selcell{padding:3px 4px!important}
 }
 .yp-item.ol .yp-mark{font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 .yp-txt{flex:1;min-height:var(--item-lh);font-size:15.5px;line-height:var(--item-lh);padding:0}
+/* 纯文本没有类型符号，不该白占类型位那 15px + 间距 —— **全站顶格**（2026-10-24 用户要求）。
+   做法：类型位直接 display:none —— 它不参与 flex 布局，前面的 gap 也就不存在了，
+   文字自然落到行首（比「宽度归零 + 负 margin」稳：各页的 gap 并不都是 7px，写死会顶过头）。
+   有符号的类型（勾选框 / 圆点 / 序号）不受影响；缩进（.ind）仍从行首算 18px。
+   注意：一日四格的 FIT 行、空白任务表的行都不是 .yp-item，不会被这条波及。 */
+.yp-item.plain > .yp-mark{display:none}
 /* 任务打勾 → 整条（勾选框 + 文字）一起变浅灰并加删除线；取消打勾自动还原 */
 .yp-item.done .yp-txt{color:var(--ink3);text-decoration:line-through}
 .yp-item.done .box{border-color:#cbcbca;background:#f1f1ef}
@@ -1097,11 +1103,10 @@ tr[data-mtempty="1"].mt-act .mt-del{visibility:visible}
 /* 删除线条目 */
 /* 删除线条目（旧的 del 类型，保留兼容；新的删除线是对选中文字施加） */
 .yp-item.del .yp-txt{text-decoration:line-through;color:var(--ink3)}
-/* 纯文本：没有标记，首字直接落在 15px 标记列的中心（与勾选框/圆点/序号同轴 39.5px）。
-   汉字advance比1em窄一点，实测首字中心会偏左 1.2px → 用 padding 补回来 */
-/* 纯文本没有符号，但仍保留 15px 标记列占位（visibility 而非 display）——
-   这样它的文字起点/中心与任务、无序、有序完全同一列，混排时不会左移 */
-.yp-item.plain .yp-mark{visibility:hidden}
+/* 纯文本：没有符号。
+   ⚠️ 这里原来是 `visibility:hidden` —— 故意**保留** 15px 标记列，让纯文本的文字起点
+   和任务/圆点/序号完全同一列。2026-10-24 用户要求纯文本顶格，已改由上方
+   `.yp-item.plain > .yp-mark{display:none}` 统一处理（一日四格早就单独这么做了）。 */
 .yp-item.plain .yp-txt{padding-left:0}
 /* 选中的文字被加删除线：execCommand 产生的是 <s> / <strike> */
 .yp-txt s,.yp-txt strike{text-decoration:line-through;color:var(--ink3)}
@@ -6468,10 +6473,10 @@ function migrateDailyTodo(scope){
    行还是老的「勾选框 + 文字 + ×」结构，只多一个 data-tdk 记类型：
    task＝勾选框 / ul＝圆点 / ol＝序号 / plain＝留空。
    四种都保留 13px 标记位，所以文字左缘始终对齐。类型由列表底部那个 ＋ 菜单选（默认 task）。 */
-function chkRowHTML(kind){
+function chkRowHTML(kind, ph){
   return '<div class="chk grow-item" data-tdk="'+kind+'">'+
     '<span class="box"></span><span class="kmark"></span>'+
-    '<div class="txt" contenteditable="true" data-ph=""></div></div>';
+    '<div class="txt" contenteditable="true" data-ph="'+(ph||"")+'"></div></div>';
 }
 /* 有序行的序号：只数 ol 行，从 1 开始 */
 function chkRenumber(list){
@@ -6501,6 +6506,39 @@ function migrateChkKind(scope){
 }
 
 /* ---------- 日记 ---------- */
+/* 「明天一小步」原来是写死的一条 .chk（没有 .grow-list，所以既不能加第二条、
+   也没有类型位）。2026-10-24 改成和空白任务表同一套可增长行：
+   写满一行、末尾那一行一有字就自动接一行；老存档里已写的那条原地搬过去。 */
+function migrateDiaryTomorrow(scope){
+  let dirty=false;
+  $$('.page[data-tpl="diary"] .sect',scope||book).forEach(sec=>{
+    const lbl=$(".lbl",sec);
+    if(!lbl || lbl.textContent.indexOf("明天一小步")<0) return;
+    if($(".grow-list",sec)) return;                     /* 已经是新结构 */
+    const olds=$$(".chk",sec).filter(r=>!r.classList.contains("grow-item"));
+    const list=document.createElement("div");
+    list.className="grow-list"; list.dataset.dntomorrow="1";
+    if(!olds.length){
+      list.innerHTML=chkRowHTML("task","一件明天能做的小事");
+    }else{
+      olds.forEach(r=>{
+        const d=document.createElement("div");
+        d.innerHTML=chkRowHTML("task","一件明天能做的小事");
+        const row=d.firstElementChild;
+        const src=$(".txt",r), dst=$(".txt",row);
+        if(src&&dst) dst.innerHTML=src.innerHTML;
+        const b1=$(".box",r), b2=$(".box",row);
+        if(b1&&b2&&b1.classList.contains("on")){ b2.classList.add("on"); row.classList.add("done"); }
+        list.appendChild(row);
+        r.remove();
+      });
+    }
+    sec.appendChild(list);
+    dirty=true;
+  });
+  return dirty;
+}
+
 /* 心情五档的档位名（从左到右，与五段进度条一一对应） */
 const MOOD_LABELS=["难过","焦虑","心累","平静","开心"];
 /* 心情刻度整块：左边「心情」+ 右边一列（上＝档位文字，下＝五段进度条） */
@@ -6527,7 +6565,7 @@ function ddBody(){
   </div>
   <div class="sect">
     <div class="lbl"><span><span class="num">3.</span> 明天一小步</span><span class="hint">可选 · 最好和周重点相关</span></div>
-    <div class="chk"><span class="box"></span><div class="txt" contenteditable="true" data-ph="一件明天能做的小事"></div></div>
+    <div class="grow-list" data-dntomorrow="1">${chkRowHTML("task","一件明天能做的小事")}</div>
   </div>`;
 }
 T.diary = ()=>{
@@ -8442,6 +8480,7 @@ function load(){
   if(migrateChkKind(book)) __migrated=true;        /* 老存档：Todo 行补 data-tdk 与类型标记位 */
   if(migrateDailyTodoSync(book)) __migrated=true;  /* 老存档：日计划 Todo 搬进周计划那一天那一格 */
   if(migrateDaynoteTitle(book)) __migrated=true;   /* 老存档：每日记录的标题 div → h1（拿回 22px/600/红） */
+  if(migrateDiaryTomorrow(book)) __migrated=true;  /* 老存档：日记「明天一小步」单行 → 可增长列表 */
   if(migrateDateShow(book)) __migrated=true;       /* 老存档：日期字段补自定义选择器的显示层 */
   if(migrateYearcal(book)) __migrated=true;        /* 老存档：年度日历页头换成统一切片器 */
   if(migrateTail(book)) __migrated=true;            /* 尾页改版：纯空白纸面 + 正中「完结」 */
