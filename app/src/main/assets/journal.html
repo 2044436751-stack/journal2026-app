@@ -5324,7 +5324,7 @@ function ttOpenMenu(it){
     const c=it.closest("[data-tbh]");
     const h=c? parseInt(c.dataset.tbh,10) : TB_ROW0;
     grid.appendChild(menu);
-    menu.style.top=(((h-TB_ROW0)+1)*TB_ROWH+2)+"px";
+    menu.style.top=(((h-TB_ROW0)+1)*tbRowH(tpage)+2)+"px";
   }else{
     row.insertAdjacentElement("afterend",menu);
   }
@@ -5554,8 +5554,32 @@ function ttSyncName(from){
    进行中的记录每秒由 tbTick 原地刷新（只改属性 / 文字，不重建 DOM ——
    长按中的块与徽标不会被换掉，这是全站踩过的坑）。
 ========================================================== */
-const TB_ROWH=29;                        /* 与 .tt2 行的实际高度一致（3.5+21+3.5+1） */
+const TB_ROWH=29;                        /* 兜底值（量不到 DOM 时才用）。真实高度见 tbRowH() */
 const TB_ROW0=7, TB_ROW1=24;
+/* 一小时的像素高度：**量出来的**，不要写死。
+   .tt-it 的 min-height(26) + 上下 padding(3.5×2) + 分隔线(1) = 34，
+   而这里曾经写死 29（那时候 .tt-it 还是 21）→ 行高改了没跟着改，
+   10:30 的现在线正好压在 10 点线上（2026-10-25 用户报的就是这个）。
+   量两行的 top 差，缓存在节点属性上（不进 innerHTML，存档与非模板都不受影响）。
+   ⚠️ 要用第 2、3 行来量：第一行顶上有 1px 的 border-top，量 1→2 会多算 1px，
+   累计到夜里就偏一整格了。 */
+function tbRowH(pg){
+  const tt=(pg&&pg.querySelector)?pg.querySelector(".tt2"):null;
+  if(!tt) return TB_ROWH;
+  if(tt.__rowH>4) return tt.__rowH;
+  const cs=tt.querySelectorAll(".tt-c");
+  let h=0;
+  if(cs.length>2){
+    const d=cs[2].getBoundingClientRect().top-cs[1].getBoundingClientRect().top;
+    if(d>4) h=d;
+  }
+  tt.__rowH=(h>4)?h:TB_ROWH;
+  return tt.__rowH;
+}
+/* 布局变了（窗口宽高 / 系统字号 / 旋转）就重新量 */
+window.addEventListener("resize",function(){
+  $$(".tt2",book).forEach(t=>{ delete t.__rowH; });
+});
 function tbISO(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
 function tbToday(){ return tbISO(bjDate()); }
 /* 页面那天的 07:00（北京）→ 绝对毫秒（中国无夏令时，UTC+8 直接换：07:00 北京 = 前一日 23:00 UTC） */
@@ -5571,7 +5595,7 @@ function tbMin(pg, ts){
 /* 时间戳 → 表格里的 y（px）；两端都 clamp 进 07:00–24:00，块不会跑出表格 */
 function tbYPx(pg, ts){
   const m=Math.max(0, Math.min((TB_ROW1-TB_ROW0)*60, tbMin(pg,ts)));
-  return m*TB_ROWH/60;
+  return m*tbRowH(pg)/60;
 }
 /* 时间表一行（计时页）：小时数字 + 计划格 + 实际格。
    整行包一个 .tt-r（CSS display:contents —— 不影响 grid 平铺），
@@ -5779,7 +5803,7 @@ function tbNowline(pg){
   }
   nl.classList.toggle("off",!show);
   if(!show) return;
-  nl.style.top=(min*TB_ROWH/60)+"px";
+  nl.style.top=(min*tbRowH(pg)/60)+"px";
   const lb=$(".nl",nl);
   if(lb) lb.textContent=(Math.floor(min)%60)+"分";
 }
