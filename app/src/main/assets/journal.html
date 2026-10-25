@@ -414,10 +414,18 @@ table td.n{border-bottom:1px solid var(--line2)}
   content:"";position:absolute;left:0;width:15px;height:1px;top:7.5px;background:var(--ink3);
 }
 .cg-imgs{display:flex;flex-direction:column;gap:3px}
-.cg-img{position:relative;border-radius:2px;overflow:hidden;background:var(--soft)}
-.cg-img img{display:block;width:100%;height:auto;max-height:106px;object-fit:cover}
+.cg-img{position:relative;border-radius:2px;overflow:hidden;background:var(--soft);
+  -webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.cg-img img{display:block;width:100%;height:auto;max-height:106px;object-fit:cover;
+  -webkit-user-drag:none;user-drag:none;pointer-events:none}
+/* 删图：× 平时**不显示**，只有长按这张图（450ms）才浮出来 —— 照片要干净，
+   误删也要有个门槛。 del-on 是运行时状态，不进模板（cleanTplHtml 会剥）。 */
 .cg-img-x{position:absolute;left:2px;top:2px;width:15px;height:15px;border:none;border-radius:50%;
-  background:rgba(255,255,255,.92);color:var(--ink3);font-size:12.5px;line-height:15px;padding:0;cursor:pointer}
+  background:rgba(255,255,255,.92);color:var(--ink3);font-size:12.5px;line-height:15px;padding:0;cursor:pointer;
+  display:none;z-index:2}
+.cg-img.del-on .cg-img-x{display:block}
+.cg-img.del-on{outline:1.5px solid var(--accent);outline-offset:-1.5px}
+.cg-img.del-on img{opacity:.82}
 .cg-img-x:active{color:var(--accent)}
 /* 工具条：点格子才出现，纯图标无文字 */
 .cg-bar{display:none;align-items:center;gap:4px;padding-top:3px;border-top:1px solid var(--line2)}
@@ -7380,7 +7388,7 @@ function cgShow(pg,name){
   const blk=$(".mc-month.on",pg);
   if(!blk) return;
   const cats=cgCats(pg);
-  cgCloseType(); cgCloseMood();
+  cgCloseType(); cgCloseMood(); cgImgClearMark();   /* 切分类/切月：亮着的 × 一律收起 */
   if(!cats.length){
     if(!$(".cg-empty-state",blk))
       blk.innerHTML='<div class="cg-empty-state">还没有任何分类<br>点上面的「添加分类」起一个名字，就能开始写</div>';
@@ -7795,6 +7803,62 @@ function cgInsertImage(pg,cell,url){
   $(".cg-imgs",cell).appendChild(box);
   save();
 }
+/* ---- 删图：× 平时不显示，长按这张图 450ms 才浮出来（2026-10-25） ----
+   照片上常驻一个 × 太碍眼，也太容易误删；改成「长按＝我要删」，
+   手感跟全站一致：450ms 触发，移动超 8px 或提前松手就取消。 */
+let CG_IMG_LP=null;
+function cgImgClearMark(){
+  $$(".cg-img.del-on",book).forEach(x=>x.classList.remove("del-on"));
+}
+function cgImgDel(box){
+  if(!box) return;
+  const par=box.parentElement, nx=box.nextElementSibling;
+  box.remove();
+  cgImgClearMark();
+  save();
+  toast("已删除图片",{action:"撤销",ms:5000,onAction:function(){
+    const host=(par&&par.isConnected)?par:null;
+    if(!host){ toast("这一格已经不在当前视图里了"); return; }
+    if(nx&&nx.parentElement===host) host.insertBefore(box,nx); else host.appendChild(box);
+    save();
+  }});
+}
+/* 按下去的那一刻：点在「没有亮 ×」的图片或别处 → 先把已经亮着的收起来 */
+function cgImgPress(e){
+  const t=e.target;
+  const box=(t&&t.closest)?t.closest(".cg-img"):null;
+  if(!box||!box.classList.contains("del-on")) cgImgClearMark();
+}
+function cgImgLPStart(e){
+  if(CG_IMG_LP) return;
+  if(e.pointerType==="mouse"&&e.button!==0) return;
+  const t=e.target;
+  const box=(t&&t.closest)?t.closest(".cg-img"):null;
+  if(!box) return;
+  if(t.closest(".cg-img-x")) return;          /* 按在 × 上是要删，不是要长按 */
+  const st={box:box,x:e.clientX,y:e.clientY,timer:0};
+  st.timer=setTimeout(()=>{
+    CG_IMG_LP=null;
+    if(!box.isConnected) return;
+    cgImgClearMark();
+    box.classList.add("del-on");
+    /* 吞掉长按收尾那一下 click：否则松手就当成「点这张图」，× 刚出来又被收回去 */
+    window.__cgImgJustOpened=true;
+    setTimeout(()=>{ window.__cgImgJustOpened=false; },700);
+    if(navigator.vibrate){ try{ navigator.vibrate(12); }catch(_){} }
+  },450);
+  CG_IMG_LP=st;
+}
+function cgImgLPMove(e){
+  const st=CG_IMG_LP; if(!st) return;
+  if(Math.abs(e.clientX-st.x)>8||Math.abs(e.clientY-st.y)>8){ clearTimeout(st.timer); CG_IMG_LP=null; }
+}
+function cgImgLPEnd(){ const st=CG_IMG_LP; if(!st) return; clearTimeout(st.timer); CG_IMG_LP=null; }
+document.addEventListener("pointerdown",cgImgPress);
+document.addEventListener("pointerdown",cgImgLPStart);
+document.addEventListener("pointermove",cgImgLPMove);
+document.addEventListener("pointerup",cgImgLPEnd);
+document.addEventListener("pointercancel",cgImgLPEnd);
 /* ---- 心情模式：整格变成一个 44px 表情 + 情绪名，文字条目与图片只是收起、不删 ---- */
 function cgEnsureMoodBox(cell){
   let box=$(".cg-moodbox",cell);
@@ -7978,6 +8042,8 @@ function cleanTplHtml(page){
   $$(".fit-row.done",c).forEach(x=>x.classList.remove("done"));
   /* 条目的缩进状态属于内容，模板里不留 */
   $$(".yp-item.ind",c).forEach(x=>x.classList.remove("ind"));
+  /* 日历格图片的「亮着 ×」是长按后的运行时状态，模板里不留 */
+  $$(".cg-img.del-on",c).forEach(x=>x.classList.remove("del-on"));
   /* 弹层：清空内容与开关状态 */
   $$(".bl-pop,.mc-pop,[data-mtpop],.yp-menu,.yp-pop",c).forEach(x=>{
     x.innerHTML=""; x.classList.remove("on"); delete x.dataset.for;
@@ -8605,6 +8671,8 @@ function load(){
   if(__popDirty) save();
   /* 时间表的类型菜单属于运行时状态，不进存档 */
   ttCloseMenu();
+  /* 日历格图片的「亮着 ×」同样是运行时状态：万一存档时还亮着，重进页面要收起来 */
+  cgImgClearMark();
   $$('[data-tpl="weight"]',book).forEach(refreshWeight);
   /* 打卡页：迁移补完结构后统一排一次周视图（迁移跑在 renumber 之后，所以这里补一刀） */
   $$('[data-tpl="habit"]',book).forEach(hbWeek);
@@ -8811,7 +8879,13 @@ document.addEventListener("click",function(e){
     return;
   }
   const cgImgX=t.closest(".cg-img-x");
-  if(cgImgX){ cgImgX.closest(".cg-img").remove(); save(); return; }
+  if(cgImgX){ cgImgDel(cgImgX.closest(".cg-img")); return; }
+  const cgImgB=t.closest(".cg-img");
+  if(cgImgB){
+    if(window.__cgImgJustOpened){ window.__cgImgJustOpened=false; return; }
+    /* × 已经亮着 → 再点这张图就是「算了，不删」，收起（不往下走到选中格子） */
+    if(cgImgB.classList.contains("del-on")){ cgImgClearMark(); return; }
+  }
   const cgBlank=t.closest(".cg-blank[data-d]");
   if(cgBlank){ cgRestoreCell(cgBlank); return; }
   const cgMk=t.closest(".cg-mark");
@@ -9805,9 +9879,15 @@ document.addEventListener("input",function(e){
       if(st && st.innerHTML!==dmt.innerHTML) st.innerHTML=dmt.innerHTML;
       ttSyncName(dmt);
       save();
-      const pin=()=>{ if(Math.abs(window.scrollY-sy)>120) window.scrollTo(0,sy); };
+      const pin=()=>{
+        if(Math.abs(window.scrollY-sy)<=120) return;
+        /* 只有光标还留在这一行时才拽回来 —— 已经自己划走的就别拦。
+           真机的 IME 收起 / 选词会比 input 事件晚几百毫秒，所以补最后一眼（2026-10-24）。 */
+        const ae=document.activeElement;
+        if(ae && dmt.isConnected && (ae===dmt || dmt.contains(ae))) window.scrollTo(0,sy);
+      };
       requestAnimationFrame(()=>{ pin(); requestAnimationFrame(pin); });
-      setTimeout(pin,160);
+      setTimeout(pin,160); setTimeout(pin,380);
       return;
     }
   }
@@ -10015,10 +10095,14 @@ document.addEventListener("keydown",function(e){
   /* 时间表里的任务名：单行字段，不进拆行 / 删行那一套 */
   if(t.closest("[data-tttx]")){ if(e.key==="Enter") e.preventDefault(); return; }
 
-  /* 日计划 / 计时模式 Todo 镜像行：先把光标搬到周计划真源那条上，
-     下面的拆行 / 新增 / 删行逻辑就能原样作用在真源上 */
+  /* 日计划 / 计时模式 Todo 镜像行：只有**行级操作**（回车 / 退格 / 删除）才把光标搬到
+     周计划真源那条上，让下面的拆行 / 新增 / 删行逻辑原样作用在真源上。
+     ⚠️ 普通打字必须留在镜像里（文字由 input 委托写回真源，已经这么做了）。
+     以前是「任何 keydown 都搬」——真机上敲第一个字母（或选词的那一刻）焦点就跑到周计划
+     那一格，IME 立刻把视口滚过去，表现成「输入完文字的下一秒自动跳到我的一周页面」。
+     2026-10-24 修：搬焦点只留给真正需要改行结构的键。 */
   const dmk=t.closest('.page[data-tpl="daily"] .grow-list > .yp-item,.page[data-tpl="timer"] .grow-list > .yp-item');
-  if(dmk){
+  if(dmk && (e.key==="Enter"||e.key==="Backspace"||e.key==="Delete")){
     const pg=mirPage(dmk);
     const src=dailySrc(dmk);
     if(src){
